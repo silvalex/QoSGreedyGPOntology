@@ -1,11 +1,11 @@
 package taxonomy;
 
+import nodes.ServiceNode;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import nodes.ServiceNode;
 
 /**
  * Represents a node in the input/output taxonomy
@@ -59,4 +59,22 @@ public class TaxonomyNode {
 
 		return serviceSet;
 	}
+
+//    public boolean removeServiceFromSubtree(ServiceNode s) {
+//        boolean containedInTree = false;
+//
+//        if (services.contains(s)) {
+//            services.remove(s);
+//            containedInTree = true;
+//        }
+//        else {
+//            // Iterate down through the children
+//            for (TaxonomyNode node : children) {
+//                containedInTree = node.removeServiceFromSubtree(s);
+//                if (containedInTree)
+//                    break;
+//            }
+//        }
+//        return containedInTree;
+//    }
 }

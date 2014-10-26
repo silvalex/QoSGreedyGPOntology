@@ -1,16 +1,15 @@
 package tests;
 
-import static org.junit.Assert.*;
 import gp.GreedyInitialiser;
 import gp.GreedyMutation;
 import gp.MyRand;
 import gp.QoSModel;
 import nodes.InOutNode;
-
 import org.epochx.gp.representation.GPCandidateProgram;
-import org.epochx.representation.CandidateProgram;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
 
 public class MutationTests {
 	private static QoSModel model;
@@ -29,7 +28,7 @@ public class MutationTests {
 
 		GreedyMutation mut = new GreedyMutation(model, rand);
 
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 100; i++) {
 			solution = (GPCandidateProgram) mut.mutate(solution);
 			InOutNode root = (InOutNode) solution.getRootNode();
 			System.out.println("Number: " + i + ", Terminals: " + solution.getNoTerminals() + ", Input: " + root.getInputs() + ", Output: " + root.getOutputs());

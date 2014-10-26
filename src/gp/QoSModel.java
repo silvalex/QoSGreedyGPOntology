@@ -3,39 +3,10 @@ package gp;
 import graph.Graph;
 import graph.GraphEdge;
 import graph.GraphNode;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.Reader;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Scanner;
-import java.util.Set;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
 import nodes.EvaluationResults;
 import nodes.ParallelNode;
 import nodes.SequenceNode;
 import nodes.ServiceNode;
-
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -60,8 +31,16 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
-
 import taxonomy.TaxonomyNode;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Model implementation for performing tree-based Web
@@ -228,7 +207,7 @@ public class QoSModel extends GPModel {
 		syntax.add(new ParallelNode());
 
 		relevantServices = getRelevantServices(serviceMap, availableInputs, requiredOutputs);
-		eliminateCycleCausingServices(); // XXX
+//		eliminateCycleCausingServices(); // TODO
 
 		// Terminal nodes
 		for (ServiceNode s : relevantServices) {
@@ -443,53 +422,54 @@ public class QoSModel extends GPModel {
 		}
 	}
 
-	private void eliminateCycleCausingServices() {
-		Set<ServiceNode> excluded = new HashSet<ServiceNode>();
-
-		Graph g = new Graph();
-		GraphNode output = getGraphNode(outputNode.getName(), g);
-
-		Queue<GraphNode> queue = new LinkedList<GraphNode>();
-		queue.offer(output);
-
-		Set<GraphNode> visited = new HashSet<GraphNode>();
-
-		while(!queue.isEmpty()) {
-			GraphNode current = queue.poll();
-			if (!visited.contains(current) && !current.getName().equals("Input")) {
-				visited.add(current);
-				for (String input : current.getInputs()) {
-					// Get services whose output can fulfil this input
-					List<ServiceNode> sList = new ArrayList<ServiceNode>(taxonomyMap.get(input).getServicesWithOutput());
-					for (ServiceNode s: sList) {
-						if (s != current.node) {
-							GraphNode gNode = g.nodeMap.get(s.getName());
-							if(gNode == null) {
-								addEdgeToGraph(g, gNode, current, s, queue);
-							}
-							else {
-								// If there is a path, exclude this service from consideration
-								if (hasPath(current, gNode)) {
-									excluded.add(gNode.node);
-								}
-								else {
-									addEdgeToGraph(g, gNode, current, s, queue);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		for (ServiceNode s: excluded) {
-			relevantServices.remove(s);
-			// Remove from taxonomy
-
-			for (String o: s.getOutputs())
-				taxonomyMap.get(o).services.remove(s);
-		}
-	}
+//	private void eliminateCycleCausingServices() {
+//		Set<ServiceNode> excluded = new HashSet<ServiceNode>();
+//
+//		Graph g = new Graph();
+//		GraphNode output = getGraphNode(outputNode.getName(), g);
+//
+//		Queue<GraphNode> queue = new LinkedList<GraphNode>();
+//		queue.offer(output);
+//
+//		Set<GraphNode> visited = new HashSet<GraphNode>();
+//
+//		while(!queue.isEmpty()) {
+//			GraphNode current = queue.poll();
+//			if (!visited.contains(current) && !current.getName().equals("Input")) {
+//				visited.add(current);
+//				for (String input : current.getInputs()) {
+//					// Get services whose output can fulfil this input
+//					List<ServiceNode> sList = new ArrayList<ServiceNode>(taxonomyMap.get(input).getServicesWithOutput());
+//					for (ServiceNode s: sList) {
+//						if (s != current.node) {
+//							GraphNode gNode = g.nodeMap.get(s.getName());
+//							if(gNode == null) {
+//								addEdgeToGraph(g, gNode, current, s, queue);
+//							}
+//							else {
+//                                List<GraphNode> list = findPath(current, gNode);
+//								// If there is a path, exclude this service from consideration
+//								if (list != null) {
+//									excluded.add(gNode.node);
+//								}
+//								else {
+//									addEdgeToGraph(g, gNode, current, s, queue);
+//								}
+//							}
+//						}
+//					}
+//				}
+//			}
+//		}
+//
+//		for (ServiceNode s: excluded) {
+//			relevantServices.remove(s);
+//			// Remove from taxonomy
+//
+//			for (String o: s.getOutputs())
+//				taxonomyMap.get(o).services.remove(s);
+//		}
+//	}
 
 	private void addEdgeToGraph(Graph g, GraphNode gNode, GraphNode current, ServiceNode s, Queue<GraphNode> queue) {
 		// Add to graph
@@ -637,15 +617,17 @@ public class QoSModel extends GPModel {
 					Node sn = pickRandomService(nodeTo, graph, relevantServices, sInput, random);
 
 					// If there are no options to continue building this graph
-					if (sn == null){
+					if (sn == null){ //TODO
 						// Abort
 						System.out.println("Abort");
 						return null;
 					}
 
 					GraphNode nodeFrom = getGraphNode(sn.getIdentifier(), graph);
-					if (nodeFrom == null || nodeFrom.equals(nodeTo))
-						return null;
+					if (nodeFrom == null || nodeFrom.equals(nodeTo)) {
+                        System.out.println("Abort: unexpected error when creating graph.");
+                        return null;
+                    }
 					else {
 						// Check if its output feeds the input of the service we want to connect
 						Set<String> intersect = getSatisfiedInputs(sInput, new HashSet<String>(nodeFrom.getOutputs()));
@@ -684,28 +666,74 @@ public class QoSModel extends GPModel {
 	 * @param destination
 	 * @return true if there is a path, false otherwise
 	 */
-	private boolean hasPath(GraphNode origin, GraphNode destination) {
+//	private boolean hasPath(GraphNode origin, GraphNode destination) {
+//		/* The end service in the graph is never the origin of any edges,
+//		 * and the start service is never the destination.*/
+//		if (origin.node.getName().equals(outputNode.getName()) || destination.node.getName().equals(inputNode.getName()))
+//			return false;
+//
+//		Queue<GraphNode> queue = new LinkedList<GraphNode>();
+//		queue.offer(origin);
+//
+//		while(!queue.isEmpty()) {
+//			GraphNode current = queue.poll();
+//			if (current == destination) {
+//				return true;
+//			}
+//			else {
+//				for (GraphEdge e : current.to) {
+//					queue.offer(e.to);
+//				}
+//			}
+//		}
+//		return false;
+//	}
+
+    private List<GraphNode> findPath(GraphNode origin, GraphNode destination) {
+        if (origin == destination) {
+            List<GraphNode> list = new ArrayList<GraphNode>();
+            list.add(destination);
+            return list;
+        }
+        else if (origin.to.isEmpty())
+            return null;
+        else {
+            for (GraphEdge e : origin.to) {
+                List<GraphNode> temp = findPath(e.to, destination);
+                if (temp != null) {
+                    // As soon as we have A path, return it...
+                    List<GraphNode> list = new ArrayList<GraphNode>();
+                    list.add(origin);
+                    list.addAll(temp);
+                    return list;
+                }
+            }
+            return null;
+        }
+    }
+
+    private boolean hasPath(GraphNode origin, GraphNode destination) {
 		/* The end service in the graph is never the origin of any edges,
 		 * and the start service is never the destination.*/
-		if (origin.node.getName().equals(outputNode.getName()) || destination.node.getName().equals(inputNode.getName()))
-			return false;
+        if (origin.node.getName().equals(outputNode.getName()) || destination.node.getName().equals(inputNode.getName()))
+            return false;
 
-		Queue<GraphNode> queue = new LinkedList<GraphNode>();
-		queue.offer(origin);
+        Queue<GraphNode> queue = new LinkedList<GraphNode>();
+        queue.offer(origin);
 
-		while(!queue.isEmpty()) {
-			GraphNode current = queue.poll();
-			if (current == destination) {
-				return true;
-			}
-			else {
-				for (GraphEdge e : current.to) {
-					queue.offer(e.to);
-				}
-			}
-		}
-		return false;
-	}
+        while(!queue.isEmpty()) {
+            GraphNode current = queue.poll();
+            if (current == destination) {
+                return true;
+            }
+            else {
+                for (GraphEdge e : current.to) {
+                    queue.offer(e.to);
+                }
+            }
+        }
+        return false;
+    }
 
 	/**
 	 * Given a service name, this method returns the corresponding
@@ -753,33 +781,31 @@ public class QoSModel extends GPModel {
 			System.exit(1);
 		}
 
+        if (!it.hasNext()) {
+            int i = 0;
+        }
+
 		while (selected == null && it.hasNext()) {
 			String next = it.next();
 			List<Node> sList = new ArrayList<Node>(taxonomyMap.get(next).getServicesWithOutput());
 
-			if (sList != null && !sList.isEmpty()) {
+			if (!sList.isEmpty()) {
 				Collections.shuffle(sList, ((MyRand)random).getRandom());
 				for (int i = 0; i < sList.size(); i++) {
 					Node s = sList.get(i);
 					GraphNode destination = graph.nodeMap.get(s.getIdentifier());
+                    // If service is either in our list of allowed services, or it is the input service...
 					if (services.contains(s) || s.getIdentifier().equals(inputNode.getName())) {
 						if (destination == null) {
 							selected = s;
 							break;
 						}
 						else {
-							if (!hasPath(origin, destination)) {
+                            List<GraphNode> list = findPath(origin, destination);
+
+							if (list == null) {
 								selected = s;
 								break;
-							}
-							else {
-								// If input satisfaction of service in node can only be performed
-								// by a single other service, remove the service in node from future
-								// consideration
-								if (sList.size() == 1) {
-									//services.remove(node.node); XXX
-									//removedNodes++;
-								}
 							}
 						}
 					}
@@ -847,7 +873,7 @@ public class QoSModel extends GPModel {
 			taxonomyMap.get(outputVal).services.add(inputNode);
 
 		// Rediscover services fit for the composition
-		//relevantServices = getRelevantServices(serviceMap, availableInputs, requiredOutputs); XXX
+		//relevantServices = getRelevantServices(serviceMap, availableInputs, requiredOutputs); TODO
 	}
 
 	/**
