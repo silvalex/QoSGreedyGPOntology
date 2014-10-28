@@ -1,23 +1,26 @@
 package tests;
 
-import static org.junit.Assert.*;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-
-import gp.QoSModel;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import gp.ForbiddenNodes;
 import gp.MyRand;
+import gp.QoSModel;
 import graph.Graph;
 import graph.GraphEdge;
 import graph.GraphNode;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import nodes.InOutNode;
 import nodes.ParallelNode;
 import nodes.SequenceNode;
 import nodes.ServiceNode;
 
 import org.epochx.epox.Node;
-import org.epochx.tools.random.RandomNumberGenerator;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -124,18 +127,18 @@ public class QoSModelTests {
 	@Test
 	public void testCreateGraph() {
 		List<ServiceNode> relevantServices = model.getRelevantServices();
-		Graph g = model.createGraph(relevantServices, new MyRand(333));
+		Graph g = model.createGraph(relevantServices, new MyRand(333), new ForbiddenNodes());
 		String s = g.toString();
 
 		// Ensure that graph contains input and output nodes
-		assertNotEquals(g.nodeMap.get("Input"), null);
-		assertNotEquals(g.nodeMap.get("Output"), null);
+		assertNotNull(g.nodeMap.get("Input"));
+		assertNotNull(g.nodeMap.get("Output"));
 
 		// Ensure that graph contains all four expected services
-		assertNotEquals(g.nodeMap.get("GenerateMapService"), null);
-		assertNotEquals(g.nodeMap.get("BusService"), null);
-		assertNotEquals(g.nodeMap.get("HotelFunctionsService"), null);
-		assertNotEquals(g.nodeMap.get("FlightInformation"), null);
+		assertNotNull(g.nodeMap.get("GenerateMapService"));
+		assertNotNull(g.nodeMap.get("BusService"));
+		assertNotNull(g.nodeMap.get("HotelFunctionsService"));
+		assertNotNull(g.nodeMap.get("FlightInformation"));
 
 		// Check that input node is indeed the origin
 		GraphNode input = g.nodeMap.get("Input");
@@ -208,6 +211,18 @@ public class QoSModelTests {
 		Node root = graphInput.toTree(model.getInputs());
 		// Root must be a parallel node
 		assertTrue(root instanceof ParallelNode);
+		// Root input must be Date, DepartureDate, City, Location
+		InOutNode ioRoot = (InOutNode) root;
+		assertEquals(4, ioRoot.getInputs().size());
+		assertTrue(ioRoot.getInputs().contains("Date"));
+		assertTrue(ioRoot.getInputs().contains("DepartureDate"));
+		assertTrue(ioRoot.getInputs().contains("City"));
+		assertTrue(ioRoot.getInputs().contains("Location"));
+		assertEquals(4, ioRoot.getOutputs().size());
+	    assertTrue(ioRoot.getOutputs().contains("Ticket"));
+        assertTrue(ioRoot.getOutputs().contains("Reservation"));
+        assertTrue(ioRoot.getOutputs().contains("Map"));
+        assertTrue(ioRoot.getOutputs().contains("ArrivalDate"));
 
 		// Root must have three children
 		Node[] children = root.getChildren();
@@ -243,10 +258,17 @@ public class QoSModelTests {
 		/* The SequenceNode must have two children, the left one being FlightInformation
 		 * and the right one being HotelFunctionsService*/
 		Node sequence = children[index];
+		InOutNode ioSeq = (InOutNode) sequence;
+	    assertEquals(3, ioSeq.getInputs().size());
+        assertTrue(ioSeq.getInputs().contains("Date"));
+        assertTrue(ioSeq.getInputs().contains("DepartureDate"));
+        assertTrue(ioSeq.getInputs().contains("City"));
+        assertEquals(2, ioSeq.getOutputs().size());
+        assertTrue(ioSeq.getOutputs().contains("ArrivalDate"));
+        assertTrue(ioSeq.getOutputs().contains("Reservation"));
+        
 		children = sequence.getChildren();
 
 		assertEquals(2, children.length);
-		assertEquals("FlightInformation", children[0].getIdentifier());
-		assertEquals("HotelFunctionsService", children[1].getIdentifier());
 	}
 }

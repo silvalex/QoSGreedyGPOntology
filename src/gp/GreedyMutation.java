@@ -6,12 +6,12 @@ import java.util.Set;
 
 import nodes.InOutNode;
 
-import org.epochx.op.Mutation;
-import org.epochx.representation.CandidateProgram;
-import org.epochx.tools.random.RandomNumberGenerator;
 import org.epochx.epox.Node;
 import org.epochx.gp.model.GPModel;
 import org.epochx.gp.representation.GPCandidateProgram;
+import org.epochx.op.Mutation;
+import org.epochx.representation.CandidateProgram;
+import org.epochx.tools.random.RandomNumberGenerator;
 
 /**
  * Mutates a candidate by replacing a randomly selected
@@ -53,11 +53,11 @@ public class GreedyMutation implements Mutation{
 
 		Set<String> inputs = n.getInputs();
 		Set<String> outputs = n.getOutputs();
-
 		model.updateInputAndOutput(inputs, outputs);
 		Graph g = null;
+		ForbiddenNodes fn = new ForbiddenNodes();
 		while (g == null) {
-			g = model.createGraph(model.getRelevantServices(), random);
+			g = model.createGraph(model.getRelevantServices(), random, fn);
 		}
 		// Replacement node
 		Node subtree = g.nodeMap.get("Input").toTree(model.getInputs());

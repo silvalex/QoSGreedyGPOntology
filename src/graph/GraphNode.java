@@ -7,12 +7,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.epochx.epox.Node;
-
 import nodes.InOutNode;
 import nodes.ParallelNode;
 import nodes.SequenceNode;
 import nodes.ServiceNode;
+
+import org.epochx.epox.Node;
 
 /**
  * Represents a node in the service graph.
@@ -20,6 +20,7 @@ import nodes.ServiceNode;
  * @author sawczualex
  */
 public class GraphNode {
+    public QoSModel model;
 	public ServiceNode node;
 	public List<GraphEdge> from = new ArrayList<GraphEdge>();
 	public List<GraphEdge> to = new ArrayList<GraphEdge>();
@@ -30,8 +31,9 @@ public class GraphNode {
 	 *
 	 * @param node
 	 */
-	public GraphNode(ServiceNode node) {
+	public GraphNode(ServiceNode node, QoSModel model) {
 		this.node = node;
+		this.model = model;
 	}
 
 	@Override
@@ -130,7 +132,23 @@ public class GraphNode {
 			}
 
 		}
+		
+		// Go down the tree once again adjusting outputs
+		adjustTreeOutputs(root, QoSModel.getOutputs());
 		return root;
+	}
+	
+	private void adjustTreeOutputs(Node n, Set<String> requiredOutputs) {
+	    if (!(n instanceof ServiceNode)) {
+	        InOutNode ioN = (InOutNode) n;
+	        Set<String> outputs = ioN.getOutputs();
+	        Set<String> satisfied = model.getSatisfiedInputs(requiredOutputs, outputs);
+	        outputs.clear();
+	        outputs.addAll(satisfied);
+	        for (Node child : n.getChildren()) {
+	            adjustTreeOutputs(child, satisfied);
+	        }
+	    }
 	}
 
 	/**
@@ -167,7 +185,8 @@ public class GraphNode {
 		for (int i = 0; i < length; i++) {
 			GraphEdge child = childrenGraphNodes.get(i);
 			children[i] = getNode(child.to, parentInput);
-			inputs.addAll(child.overlap);
+			//inputs.addAll(child.overlap);
+			inputs.addAll(((InOutNode)children[i]).getInputs());
 			outputs.addAll(((InOutNode)children[i]).getOutputs());
 		}
 		root.setChildren(children);
@@ -200,9 +219,9 @@ public class GraphNode {
 		inputs.addAll(((InOutNode)leftChild).getInputs());
 		inputs.addAll(parentInput);
 
-		for (GraphEdge e : from) {
-			inputs.addAll(e.overlap);
-		}
+//		for (GraphEdge e : from) {
+//			inputs.addAll(e.overlap);
+//		}
 		outputs.addAll(((InOutNode)rightChild).getOutputs());
 		outputs.addAll(additionalOutput);
 

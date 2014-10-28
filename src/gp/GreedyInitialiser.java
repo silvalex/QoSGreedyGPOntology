@@ -4,11 +4,12 @@ import graph.Graph;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.epochx.epox.Node;
+import org.epochx.gp.representation.GPCandidateProgram;
 import org.epochx.op.Initialiser;
 import org.epochx.representation.CandidateProgram;
 import org.epochx.tools.random.RandomNumberGenerator;
-import org.epochx.epox.Node;
-import org.epochx.gp.representation.GPCandidateProgram;
 
 /**
  * Creates initial composition candidates by using the greedy graph creation
@@ -57,8 +58,9 @@ public class GreedyInitialiser implements Initialiser {
 	 */
 	public Node createCandidate() {
 		Graph g = null;
+		ForbiddenNodes fn = new ForbiddenNodes();
 		while (g == null) {
-			g = model.createGraph(model.getRelevantServices(), random);
+			g = model.createGraph(model.getRelevantServices(), random, fn);
 		}
         Node tree = g.nodeMap.get("Input").toTree(model.getInputs());
 		return tree;
