@@ -539,79 +539,151 @@ public class QoSModel extends GPModel {
 	 * @param random
 	 * @return graph (null if there was a problem building the graph)
 	 */
+//	public Graph createGraph(List<ServiceNode> services, RandomNumberGenerator random, ForbiddenNodes fn) {
+//		Graph graph = new Graph();
+//
+//		// Queue for services to be matched
+//		Queue<GraphNode> queue = new LinkedList<GraphNode>();
+//		GraphNode end = new GraphNode(outputNode, this);
+//		queue.offer(end);
+//		graph.nodeMap.put(end.getName(), end);
+//
+//		// Set to record visits
+//		Set<String> visited = new HashSet<String>();
+//
+//		Set<String> sInput;
+//		// While there are more services to connect
+//
+//		while(!queue.isEmpty()) {
+//			// Poll next from queue
+//			GraphNode nodeTo = queue.poll();
+//
+//				if (!visited.contains(nodeTo.getName())) {
+//					visited.add(nodeTo.getName());
+//
+//				// Retrieve graph node (adds node to graph if not already there)
+//				sInput = new HashSet<String>(nodeTo.getInputs());
+//
+//				// While all of its inputs haven't been matched
+//				while (!sInput.isEmpty()) {
+//					// Pick a random service
+//					PickServiceResult result = pickRandomService(nodeTo, graph, relevantServices, sInput, random, fn);
+//
+//					// If there are no options to continue building this graph
+//					if (result.chosen == null){
+//						// Abort
+//					    if (result.path != null)
+//					        fn.addForbiddenNode( result.path.get(1).node, nodeTo.node );
+//						return null;
+//					}
+//
+//					GraphNode nodeFrom = getGraphNode(result.chosen.getIdentifier(), graph);
+//					if (nodeFrom == null || nodeFrom.equals(nodeTo)) {
+//                        System.out.println("Abort: unexpected error when creating graph.");
+//                        return null;
+//                    }
+//					else {
+//						// Check if its output feeds the input of the service we want to connect
+//						Set<String> intersect = getSatisfiedInputs(sInput, new HashSet<String>(nodeFrom.getOutputs()));
+//
+//						/* If it does, remove output that is fed from list of needed inputs,
+//						/* add connection to particle, and add service to queue (if it is not the
+//						/* start service) */
+//						if (!intersect.isEmpty()) {
+//							sInput.removeAll(intersect);
+//
+//							// Create graph connections
+//							GraphEdge edge = new GraphEdge(intersect);
+//							graph.edges.add(edge);
+//							edge.to = nodeTo;
+//							edge.from = nodeFrom;
+//							nodeTo.from.add(edge);
+//							nodeFrom.to.add(edge);
+//
+//							// Put service in queue if it has not already been visited
+//							if (!nodeFrom.getName().equals(inputNode.getName()) && !visited.contains(nodeFrom.getName())) {
+//								queue.offer(nodeFrom);
+//							}
+//						}
+//					}
+//				}
+//			}
+//		}
+//		return graph;
+//	}
+
 	public Graph createGraph(List<ServiceNode> services, RandomNumberGenerator random, ForbiddenNodes fn) {
-		Graph graph = new Graph();
-
-		// Queue for services to be matched
-		Queue<GraphNode> queue = new LinkedList<GraphNode>();
-		GraphNode end = new GraphNode(outputNode, this);
-		queue.offer(end);
-		graph.nodeMap.put(end.getName(), end);
-
-		// Set to record visits
-		Set<String> visited = new HashSet<String>();
-
-		Set<String> sInput;
-		// While there are more services to connect
-
-		while(!queue.isEmpty()) {
-			// Poll next from queue
-			GraphNode nodeTo = queue.poll();
-
-				if (!visited.contains(nodeTo.getName())) {
-					visited.add(nodeTo.getName());
-
-				// Retrieve graph node (adds node to graph if not already there)
-				sInput = new HashSet<String>(nodeTo.getInputs());
-
-				// While all of its inputs haven't been matched
-				while (!sInput.isEmpty()) {
-					// Pick a random service
-					PickServiceResult result = pickRandomService(nodeTo, graph, relevantServices, sInput, random, fn);
-
-					// If there are no options to continue building this graph
-					if (result.chosen == null){
-						// Abort
-					    if (result.path != null)
-					        fn.addForbiddenNode( result.path.get(1).node, nodeTo.node );
-						return null;
-					}
-
-					GraphNode nodeFrom = getGraphNode(result.chosen.getIdentifier(), graph);
-					if (nodeFrom == null || nodeFrom.equals(nodeTo)) {
-                        System.out.println("Abort: unexpected error when creating graph.");
-                        return null;
-                    }
-					else {
-						// Check if its output feeds the input of the service we want to connect
-						Set<String> intersect = getSatisfiedInputs(sInput, new HashSet<String>(nodeFrom.getOutputs()));
-
-						/* If it does, remove output that is fed from list of needed inputs,
-						/* add connection to particle, and add service to queue (if it is not the
-						/* start service) */
-						if (!intersect.isEmpty()) {
-							sInput.removeAll(intersect);
-
-							// Create graph connections
-							GraphEdge edge = new GraphEdge(intersect);
-							graph.edges.add(edge);
-							edge.to = nodeTo;
-							edge.from = nodeFrom;
-							nodeTo.from.add(edge);
-							nodeFrom.to.add(edge);
-
-							// Put service in queue if it has not already been visited
-							if (!nodeFrom.getName().equals(inputNode.getName()) && !visited.contains(nodeFrom.getName())) {
-								queue.offer(nodeFrom);
-							}
-						}
-					}
-				}
-			}
-		}
-		return graph;
+	    Graph graph = new Graph();
+	    Set<ServiceNode> unused = new HashSet<ServiceNode>(services);
+	    GraphNode start = new GraphNode(inputNode, this);
+	    graph.nodeMap.put(start.getName(), start);
+	    Set<String> availableInputs = new HashSet<String>();
+	    availableInputs.addAll(start.getOutputs());
+	    
+	    while(!isSubsumed(requiredOutputs,availableInputs)) {
+	        ServiceNode chosen = chooseServiceNode(availableInputs, unused);
+	        unused.remove( chosen );
+	        availableInputs.addAll(chosen.getOutputs());
+	        connectChosenNode(chosen, graph);
+	    }
+	    connectChosenNode(outputNode, graph);
+	    removeDanglingNodes(graph);
+	    return graph;
 	}
-
+	
+	private ServiceNode chooseServiceNode(Set<String> outputs, Set<ServiceNode> services) {
+	    for (ServiceNode n : services) {
+	        if (isSubsumed(n.getInputs(), outputs)) {
+	            return n;
+	        }
+	    }
+	    return null;
+	}
+	
+	private void connectChosenNode(ServiceNode node, Graph graph) {
+	    GraphNode graphNode = getGraphNode(node.getName(), graph);
+	    Set<String> inputs = new HashSet<String>(node.getInputs());
+	    
+	    while (!inputs.isEmpty()) {
+	        for (GraphNode gn : graph.nodeMap.values()) {
+	            if (gn != graphNode) {
+    	            Set<String> intersect = getSatisfiedInputs(inputs, new HashSet<String>(gn.getOutputs()));
+    	            if (!intersect.isEmpty()) {
+    	                GraphEdge edge = new GraphEdge(intersect);
+    	                edge.from = gn;
+    	                edge.to = graphNode;
+    	                gn.to.add( edge );
+    	                graphNode.from.add( edge );
+    	                graph.edges.add( edge );
+    	            }
+    	            inputs.removeAll(intersect);
+	            }
+	        }
+	    }
+	}
+	
+	private void removeDanglingNodes(Graph graph) {
+	    List<GraphNode> dangling = new ArrayList<GraphNode>();
+	    for (GraphNode g : graph.nodeMap.values()) {
+	        if (!g.getName().equals("Output") && g.to.isEmpty())
+	            dangling.add( g );
+	    }
+	    
+	    for (GraphNode d: dangling) {
+	        removeDangling(d, graph);
+	    }
+	}
+	
+	private void removeDangling(GraphNode n, Graph graph) {
+	    if (n.to.isEmpty()) {
+	        graph.nodeMap.remove( n.getName() );
+	        for (GraphEdge e : n.from) {
+	            e.from.to.remove( e );
+	            removeDangling(e.from, graph);
+	        }
+	    }
+	}
+	
 	/**
 	 * Checks whether there is a path between two graph nodes
 	 * in a DAG, using a basic depth-first traversal.
