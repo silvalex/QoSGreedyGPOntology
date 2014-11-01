@@ -1,15 +1,14 @@
 package gp;
 
 import graph.Graph;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.epochx.epox.Node;
 import org.epochx.gp.representation.GPCandidateProgram;
 import org.epochx.op.Initialiser;
 import org.epochx.representation.CandidateProgram;
 import org.epochx.tools.random.RandomNumberGenerator;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Creates initial composition candidates by using the greedy graph creation
@@ -45,6 +44,7 @@ public class GreedyInitialiser implements Initialiser {
 		for(int i = 0; i < model.getPopulationSize(); i++) {
 			GPCandidateProgram candidate = new GPCandidateProgram(createCandidate(), model);
 			programs.add(candidate);
+            System.err.println("Prog: " + i);
 		}
 
 		return programs;
@@ -64,6 +64,11 @@ public class GreedyInitialiser implements Initialiser {
 		}
         Node tree = g.nodeMap.get("Input").toTree(model.getInputs());
         model.adjustTreeOutputs(tree, QoSModel.getOutputs());
+        try {
+            Thread.sleep( 500 );
+        }
+        catch ( InterruptedException ignored ) {
+        }
 		return tree;
 	}
 }

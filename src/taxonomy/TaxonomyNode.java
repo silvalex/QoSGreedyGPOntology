@@ -36,13 +36,16 @@ public class TaxonomyNode {
 	 */
 	public Set<String> getSubsumedConcepts() {
 		Set<String> concepts = new HashSet<String>();
-		concepts.add(value);
-
-		for (TaxonomyNode child : children)
-			concepts.addAll(child.getSubsumedConcepts());
-
+        _getSubsumedConcepts( concepts );
 		return concepts;
 	}
+
+    private void _getSubsumedConcepts(Set<String> concepts) {
+        concepts.add(value);
+        for (TaxonomyNode child : children) {
+            child._getSubsumedConcepts(concepts);
+        }
+    }
 
 	/**
 	 * Get services whose output is subsumed by this concept.
@@ -51,14 +54,16 @@ public class TaxonomyNode {
 	 */
 	public Set<ServiceNode> getServicesWithOutput() {
 		Set<ServiceNode> serviceSet = new HashSet<ServiceNode>();
-
-		serviceSet.addAll(services);
-
-		for (TaxonomyNode child : children)
-			serviceSet.addAll(child.getServicesWithOutput());
-
+        _getServicesWithOutput(serviceSet);
 		return serviceSet;
 	}
+
+    private void _getServicesWithOutput(Set<ServiceNode> serviceSet) {
+        serviceSet.addAll(services);
+        for (TaxonomyNode child : children) {
+            child._getServicesWithOutput( serviceSet );
+        }
+    }
 
 //    public boolean removeServiceFromSubtree(ServiceNode s) {
 //        boolean containedInTree = false;

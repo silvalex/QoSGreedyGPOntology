@@ -3,40 +3,7 @@ package gp;
 import graph.Graph;
 import graph.GraphEdge;
 import graph.GraphNode;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.Reader;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Scanner;
-import java.util.Set;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import nodes.EvaluationResults;
-import nodes.InOutNode;
-import nodes.ParallelNode;
-import nodes.SequenceNode;
-import nodes.ServiceNode;
-
+import nodes.*;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -61,8 +28,14 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
-
 import taxonomy.TaxonomyNode;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Model implementation for performing tree-based Web
@@ -100,7 +73,7 @@ public class QoSModel extends GPModel {
     private static final double w2 = 0.25;
     private static final double w3 = 0.25;
     private static final double w4 = 0.25;
-	public static final int POPULATION = 30;
+	public static final int POPULATION = 20;
 	public static final int MAX_NUM_ITERATIONS = 50;
 	public static final int MAX_INIT_DEPTH = -1;
 	public static final int MAX_DEPTH = -1;
@@ -158,25 +131,26 @@ public class QoSModel extends GPModel {
 	 * @param realPrintStream
 	 * @return print stream
 	 */
+
+    static String sep = System.getProperty("line.separator");
+
     public PrintStream createLoggingProxy(final PrintStream realPrintStream) {
         return new PrintStream(realPrintStream) {
         	private int count = 1;
         	private String s = "";
         	@Override
     		public void write(byte buf[], int off, int len) {
-    			if (count < 6) {
-    				s += String.format("%s", StandardCharsets.US_ASCII.decode(ByteBuffer.wrap(buf, off, len)));
-    				count++;
-    			}
-    			else {
-	    	        try {
-	    	        	_logger.log(DETAILS, s);
-	    	        	s = "";
-	    	        	count = 1;
-	    	        }
-	    	        catch (Exception e) {
-	    	       }
-    			}
+//                if (len > 0 && buf[len-1] != sep.charAt( 0 )) {
+//    				s += String.format("%s", StandardCharsets.US_ASCII.decode(ByteBuffer.wrap(buf, off, len)));
+//    			}
+//    			else {
+//	    	        try {
+//	    	        	_logger.log(DETAILS, s);
+//	    	        	s = "";
+//	    	        }
+//	    	        catch (Exception e) {
+//	    	       }
+//    			}
     	    }
 //    		@Override
 //    		public void println(String s) {
@@ -504,7 +478,7 @@ public class QoSModel extends GPModel {
 		boolean satisfied = true;
 		for (String input : inputs) {
 			Set<String> subsumed = taxonomyMap.get(input).getSubsumedConcepts();
-			if (doIntersection(searchSet, subsumed).isEmpty()) {
+			if (!isIntersection( searchSet, subsumed )) {
 				satisfied = false;
 				break;
 			}
@@ -524,7 +498,7 @@ public class QoSModel extends GPModel {
 		Set<String> satisfied = new HashSet<String>();
 		for (String input : inputs) {
 			Set<String> subsumed = taxonomyMap.get(input).getSubsumedConcepts();
-			if (!doIntersection(searchSet, subsumed).isEmpty())
+			if (isIntersection( searchSet, subsumed ))
 				satisfied.add(input);
 		}
 		return satisfied;
@@ -860,11 +834,19 @@ public class QoSModel extends GPModel {
 	 * @param b
 	 * @return intersection
 	 */
-	private Set<String> doIntersection(Set<String> a, Set<String> b) {
+	private Set<String> getIntersection( Set<String> a, Set<String> b ) {
 		Set<String> intersection = new HashSet<String>(a);
 		intersection.retainAll(b);
 		return intersection;
 	}
+
+    private boolean isIntersection( Set<String> a, Set<String> b ) {
+        for ( String v1 : a ) {
+            if ( b.contains( v1 ) )
+                return true;
+        }
+        return false;
+    }
 
 	/**
 	 * Populates the taxonomy tree by associating services to the
@@ -1202,9 +1184,19 @@ public class QoSModel extends GPModel {
 			e.printStackTrace();
 		}
 	}
-	
+
+    int counter = 0;
+
     public void adjustTreeOutputs( Node n, Set< String > requiredOutputs ) {
         if ( !( n instanceof ServiceNode ) ) {
+            if (++counter >= 100 ) {
+                try {
+                    Thread.sleep( 1 );
+                    counter = 0;
+                }
+                catch ( InterruptedException ignored ) {
+                }
+            }
             InOutNode ioN = ( InOutNode )n;
             Set< String > outputs = ioN.getOutputs();
             Set< String > satisfied = getSatisfiedInputs( requiredOutputs, outputs );
