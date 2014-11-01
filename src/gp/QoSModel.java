@@ -32,6 +32,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import nodes.EvaluationResults;
+import nodes.InOutNode;
 import nodes.ParallelNode;
 import nodes.SequenceNode;
 import nodes.ServiceNode;
@@ -1201,6 +1202,19 @@ public class QoSModel extends GPModel {
 			e.printStackTrace();
 		}
 	}
+	
+    public void adjustTreeOutputs( Node n, Set< String > requiredOutputs ) {
+        if ( !( n instanceof ServiceNode ) ) {
+            InOutNode ioN = ( InOutNode )n;
+            Set< String > outputs = ioN.getOutputs();
+            Set< String > satisfied = getSatisfiedInputs( requiredOutputs, outputs );
+            outputs.clear();
+            outputs.addAll( satisfied );
+            for ( Node child : n.getChildren() ) {
+                adjustTreeOutputs( child, satisfied );
+            }
+        }
+    }
 
 	/**
 	 * Resets data structures in the model to ready

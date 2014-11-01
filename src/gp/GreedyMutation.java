@@ -61,6 +61,7 @@ public class GreedyMutation implements Mutation{
 		}
 		// Replacement node
 		Node subtree = g.nodeMap.get("Input").toTree(model.getInputs());
+		model.adjustTreeOutputs(subtree, QoSModel.getOutputs());
 		// Search for the node to replace with mutated subtree
 		Node root = model.replaceSubtree(p.getRootNode(), (Node)n, subtree);
 

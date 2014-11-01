@@ -134,21 +134,7 @@ public class GraphNode {
 		}
 		
 		// Go down the tree once again adjusting outputs
-		adjustTreeOutputs(root, QoSModel.getOutputs());
 		return root;
-	}
-	
-	private void adjustTreeOutputs(Node n, Set<String> requiredOutputs) {
-	    if (!(n instanceof ServiceNode)) {
-	        InOutNode ioN = (InOutNode) n;
-	        Set<String> outputs = ioN.getOutputs();
-	        Set<String> satisfied = model.getSatisfiedInputs(requiredOutputs, outputs);
-	        outputs.clear();
-	        outputs.addAll(satisfied);
-	        for (Node child : n.getChildren()) {
-	            adjustTreeOutputs(child, satisfied);
-	        }
-	    }
 	}
 
 	/**

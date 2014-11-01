@@ -63,6 +63,7 @@ public class GreedyInitialiser implements Initialiser {
 			g = model.createGraph(model.getRelevantServices(), random, fn);
 		}
         Node tree = g.nodeMap.get("Input").toTree(model.getInputs());
+        model.adjustTreeOutputs(tree, QoSModel.getOutputs());
 		return tree;
 	}
 }
