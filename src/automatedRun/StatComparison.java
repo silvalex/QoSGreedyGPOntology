@@ -33,9 +33,9 @@ public class StatComparison {
 	public static final String LOG_PREFIX = "gp";
 	public static final String STAT_LOG_PREFIX = "gpStats";
 
-	public static final String[] TASK_FILE_LIST = {"../wsc2008/Set01MetaData/problem.xml", "../wsc2008/Set02MetaData/problem.xml", "../wsc2008/Set03MetaData/problem.xml", "../wsc2008/Set04MetaData/problem.xml", "../wsc2008/Set05MetaData/problem.xml", "../wsc2008/Set06MetaData/problem.xml", "../wsc2008/Set07MetaData/problem.xml", "../wsc2008/Set08MetaData/problem.xml"};
-	public static final String[] SERVICE_FILE_LIST = {"../wsc2008/Set01MetaData/services-output.xml", "../wsc2008/Set02MetaData/services-output.xml", "../wsc2008/Set03MetaData/services-output.xml", "../wsc2008/Set04MetaData/services-output.xml", "../wsc2008/Set05MetaData/services-output.xml", "../wsc2008/Set06MetaData/services-output.xml", "../wsc2008/Set07MetaData/services-output.xml", "../wsc2008/Set08MetaData/services-output.xml"};
-	public static final String[] TAXONOMY_FILE_LIST = {"../wsc2008/Set01MetaData/taxonomy.xml", "../wsc2008/Set02MetaData/taxonomy.xml", "../wsc2008/Set03MetaData/taxonomy.xml", "../wsc2008/Set04MetaData/taxonomy.xml", "../wsc2008/Set05MetaData/taxonomy.xml", "../wsc2008/Set06MetaData/taxonomy.xml", "../wsc2008/Set07MetaData/taxonomy.xml", "../wsc2008/Set08MetaData/taxonomy.xml"};
+	public static final String[] TASK_FILE_LIST = {/*"../wsc2008/Set01MetaData/problem.xml", "../wsc2008/Set02MetaData/problem.xml", */"../wsc2008/Set03MetaData/problem.xml"/*,"../wsc2008/Set04MetaData/problem.xml", "../wsc2008/Set05MetaData/problem.xml", "../wsc2008/Set06MetaData/problem.xml", "../wsc2008/Set07MetaData/problem.xml", "../wsc2008/Set08MetaData/problem.xml"*/};
+	public static final String[] SERVICE_FILE_LIST = {/*"../wsc2008/Set01MetaData/services-output.xml", "../wsc2008/Set02MetaData/services-output.xml",*/ "../wsc2008/Set03MetaData/services-output.xml"/*, "../wsc2008/Set04MetaData/services-output.xml", "../wsc2008/Set05MetaData/services-output.xml", "../wsc2008/Set06MetaData/services-output.xml", "../wsc2008/Set07MetaData/services-output.xml", "../wsc2008/Set08MetaData/services-output.xml"*/};
+	public static final String[] TAXONOMY_FILE_LIST = {/*"../wsc2008/Set01MetaData/taxonomy.xml", "../wsc2008/Set02MetaData/taxonomy.xml", */"../wsc2008/Set03MetaData/taxonomy.xml"/*, "../wsc2008/Set04MetaData/taxonomy.xml", "../wsc2008/Set05MetaData/taxonomy.xml", "../wsc2008/Set06MetaData/taxonomy.xml", "../wsc2008/Set07MetaData/taxonomy.xml", "../wsc2008/Set08MetaData/taxonomy.xml"*/};
 
 //	public static final String[] TASK_FILE_LIST = {"problem.xml"};
 //	public static final String[] SERVICE_FILE_LIST = {"services-output.xml"};
@@ -49,11 +49,11 @@ public class StatComparison {
 			System.out.printf("Testing with file '%s'...", SERVICE_FILE_LIST[j]);
 			String dateTime = new SimpleDateFormat("_dd-MM-yyyy_HH-mm-ss").format(Calendar.getInstance().getTime());
 
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			}
+//			try { TODO
+//				Thread.sleep(1000);
+//			} catch (InterruptedException e1) {
+//				e1.printStackTrace();
+//			}
 
 			// Construct new model (constructor will invoke runs)
 			new QoSModel(LOG_PREFIX + dateTime, STAT_LOG_PREFIX + dateTime, SERVICE_FILE_LIST[j], TASK_FILE_LIST[j], TAXONOMY_FILE_LIST[j]);

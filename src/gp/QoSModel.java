@@ -594,7 +594,7 @@ public class QoSModel extends GPModel {
 	    graph.nodeMap.put(start.getName(), start);
 	    Set<String> availableInputs = new HashSet<String>();
 	    availableInputs.addAll(start.getOutputs());
-	    
+
 	    while(!isSubsumed(requiredOutputs,availableInputs)) {
 	        ServiceNode chosen = chooseServiceNode(availableInputs, unused);
 	        unused.remove( chosen );
@@ -605,7 +605,7 @@ public class QoSModel extends GPModel {
 	    removeDanglingNodes(graph);
 	    return graph;
 	}
-	
+
 	private ServiceNode chooseServiceNode(Set<String> outputs, Set<ServiceNode> services) {
 	    for (ServiceNode n : services) {
 	        if (isSubsumed(n.getInputs(), outputs)) {
@@ -614,11 +614,11 @@ public class QoSModel extends GPModel {
 	    }
 	    return null;
 	}
-	
+
 	private void connectChosenNode(ServiceNode node, Graph graph) {
 	    GraphNode graphNode = getGraphNode(node.getName(), graph);
 	    Set<String> inputs = new HashSet<String>(node.getInputs());
-	    
+
 	    while (!inputs.isEmpty()) {
 	        for (GraphNode gn : graph.nodeMap.values()) {
 	            if (gn != graphNode) {
@@ -636,19 +636,19 @@ public class QoSModel extends GPModel {
 	        }
 	    }
 	}
-	
+
 	private void removeDanglingNodes(Graph graph) {
 	    List<GraphNode> dangling = new ArrayList<GraphNode>();
 	    for (GraphNode g : graph.nodeMap.values()) {
 	        if (!g.getName().equals("Output") && g.to.isEmpty())
 	            dangling.add( g );
 	    }
-	    
+
 	    for (GraphNode d: dangling) {
 	        removeDangling(d, graph);
 	    }
 	}
-	
+
 	private void removeDangling(GraphNode n, Graph graph) {
 	    if (n.to.isEmpty()) {
 	        graph.nodeMap.remove( n.getName() );
@@ -658,7 +658,7 @@ public class QoSModel extends GPModel {
 	        }
 	    }
 	}
-	
+
 	/**
 	 * Checks whether there is a path between two graph nodes
 	 * in a DAG, using a basic depth-first traversal.
@@ -776,7 +776,7 @@ public class QoSModel extends GPModel {
 	private PickServiceResult pickRandomService(GraphNode node, Graph graph, List<ServiceNode> services, Set<String> input, RandomNumberGenerator random, ForbiddenNodes fn) {
 		Node selected = null;
 		List<GraphNode> path = null;
-		
+
 		Iterator<String> it = input.iterator();
 		GraphNode origin = graph.nodeMap.get(node.getName());
 		if (origin == null) {
@@ -791,7 +791,7 @@ public class QoSModel extends GPModel {
 			if (!sList.isEmpty()) {
 				Collections.shuffle(sList, ((MyRand)random).getRandom());
 				List<ServiceNode> forbiddenList = fn.getForbiddenNodes(node.node);
-				
+
 				for (int i = 0; i < sList.size(); i++) {
 					Node s = sList.get(i);
 					if (s.getIdentifier().equals(node.getName()))
@@ -1189,14 +1189,14 @@ public class QoSModel extends GPModel {
 
     public void adjustTreeOutputs( Node n, Set< String > requiredOutputs ) {
         if ( !( n instanceof ServiceNode ) ) {
-            if (++counter >= 100 ) {
-                try {
-                    Thread.sleep( 1 );
-                    counter = 0;
-                }
-                catch ( InterruptedException ignored ) {
-                }
-            }
+//            if (++counter >= 100 ) { TODO
+//                try {
+//                    Thread.sleep( 1 );
+//                    counter = 0;
+//                }
+//                catch ( InterruptedException ignored ) {
+//                }
+//            }
             InOutNode ioN = ( InOutNode )n;
             Set< String > outputs = ioN.getOutputs();
             Set< String > satisfied = getSatisfiedInputs( requiredOutputs, outputs );

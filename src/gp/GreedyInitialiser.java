@@ -64,11 +64,11 @@ public class GreedyInitialiser implements Initialiser {
 		}
         Node tree = g.nodeMap.get("Input").toTree(model.getInputs());
         model.adjustTreeOutputs(tree, QoSModel.getOutputs());
-        try {
-            Thread.sleep( 500 );
-        }
-        catch ( InterruptedException ignored ) {
-        }
+//        try { TODO
+//            Thread.sleep( 500 );
+//        }
+//        catch ( InterruptedException ignored ) {
+//        }
 		return tree;
 	}
 }
