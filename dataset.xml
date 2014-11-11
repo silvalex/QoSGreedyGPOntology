@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services>
+	<service name="serv1" Res="3036.15" Ava="0.51" Suc="0.75" Rel="0.34"
+		Lat="2474.34" Pri="7.17">
+		<inputs>
+			<instance name="inst3" />
+			<instance name="inst4" />
+		</inputs>
+		<outputs>
+			<instance name="inst5" />
+			<instance name="inst6" />
+		</outputs>
+	</service>
+	<service name="serv2" Res="781.15" Ava="0.78" Suc="0.48" Rel="0.88"
+		Lat="1558.79" Pri="3.60">
+		<inputs>
+			<instance name="inst7" />
+		</inputs>
+		<outputs>
+			<instance name="inst9" />
+		</outputs>
+	</service>
+	<service name="serv3" Res="2905.71" Ava="0.90" Suc="0.21" Rel="0.67"
+		Lat="578.01" Pri="2.95">
+		<inputs>
+			<instance name="inst8" />
+		</inputs>
+		<outputs>
+			<instance name="inst10" />
+			<instance name="inst11" />
+		</outputs>
+	</service>
+	<service name="serv4" Res="807.33" Ava="0.76" Suc="0.78" Rel="0.58"
+		Lat="1634.56" Pri="4.05">
+		<inputs>
+			<instance name="inst13" />
+			<instance name="inst14" />
+		</inputs>
+		<outputs>
+			<instance name="inst15" />
+		</outputs>
+	</service>
+	<service name="serv5" Res="1349.29" Ava="0.34" Suc="0.23" Rel="0.96"
+		Lat="2359.92" Pri="0.34">
+		<inputs>
+			<instance name="inst12" />
+			<instance name="inst16" />
+		</inputs>
+		<outputs>
+			<instance name="inst17" prob="0.4" />
+			<instance name="inst18" prob="0.6" />
+		</outputs>
+	</service>
+	<service name="serv6" Res="2057.39" Ava="0.96" Suc="0.57" Rel="0.65"
+		Lat="3077.48" Pri="3.49">
+		<inputs>
+			<instance name="inst19" />
+		</inputs>
+		<outputs>
+			<instance name="inst20" />
+			<instance name="inst21" />
+		</outputs>
+	</service>
+	<service name="serv7" Res="2390.57" Ava="0.38" Suc="0.21" Rel="0.73"
+		Lat="239.75" Pri="4.23">
+		<inputs>
+			<instance name="inst22" />
+		</inputs>
+		<outputs>
+			<instance name="inst23" />
+			<instance name="inst24" />
+		</outputs>
+	</service>
+	<service name="serv8" Res="972.34" Ava="0.67" Suc="0.92" Rel="0.59"
+		Lat="987.34" Pri="9.73">
+		<inputs>
+			<instance name="inst25" />
+		</inputs>
+		<outputs>
+			<instance name="inst26" />
+		</outputs>
+	</service>
+	<service name="serv9" Res="234.50" Ava="0.89" Suc="0.82" Rel="0.34"
+		Lat="1883.42" Pri="4.52">
+		<inputs>
+			<instance name="inst27" />
+		</inputs>
+		<outputs>
+			<instance name="inst28" />
+			<instance name="inst29" />
+		</outputs>
+	</service>
+	<service name="serv10" Res="2393.37" Ava="0.82" Suc="0.37" Rel="0.73"
+		Lat="858.25" Pri="2.83">
+		<inputs>
+			<instance name="inst30" />
+			<instance name="inst31" />
+		</inputs>
+		<outputs>
+			<instance name="inst32" />
+		</outputs>
+	</service>
+	<service name="serv11" Res="191.45" Ava="0.73" Suc="0.48" Rel="0.65"
+		Lat="328.50" Pri="9.90">
+		<inputs>
+			<instance name="inst33" />
+			<instance name="inst34" />
+		</inputs>
+		<outputs>
+			<instance name="inst35" />
+		</outputs>
+	</service>
+	<service name="serv12" Res="2934.56" Ava="0.72" Suc="0.28" Rel="0.83"
+		Lat="2393.32" Pri="5.41">
+		<inputs>
+			<instance name="inst36" />
+		</inputs>
+		<outputs>
+			<instance name="inst37" />
+			<instance name="inst38" />
+			<instance name="inst39" />
+		</outputs>
+	</service>
+	<service name="serv13" Res="1234.74" Ava="0.37" Suc="0.83" Rel="0.72"
+		Lat="382.45" Pri="6.91">
+		<inputs>
+			<instance name="inst40" />
+		</inputs>
+		<outputs>
+			<instance name="inst41" />
+		</outputs>
+	</service>
+	<service name="serv14" Res="945.78" Ava="0.99" Suc="0.38" Rel="0.98"
+		Lat="1998.97" Pri="3.45">
+		<inputs>
+			<instance name="inst42" />
+		</inputs>
+		<outputs>
+			<instance name="inst43" />
+		</outputs>
+	</service>
+	<service name="serv15" Res="8223.20" Ava="0.44" Suc="0.56" Rel="0.63"
+		Lat="2010.23" Pri="1.90">
+		<inputs>
+			<instance name="inst44" />
+		</inputs>
+		<outputs>
+			<instance name="inst45" />
+		</outputs>
+	</service>
+	<service name="serv16" Res="773.95" Ava="0.34" Suc="0.66" Rel="0.93"
+		Lat="782.46" Pri="0.90">
+		<inputs>
+			<instance name="inst46" />
+			<instance name="inst47" />
+		</inputs>
+		<outputs>
+			<instance name="inst48" />
+		</outputs>
+	</service>
+	<service name="serv17" Res="1387.21" Ava="0.43" Suc="0.79" Rel="0.34"
+		Lat="457.87" Pri="3.21">
+		<inputs>
+			<instance name="inst49" />
+			<instance name="inst50" />
+		</inputs>
+		<outputs>
+			<instance name="inst51" prob="0.4" />
+			<instance name="inst52" prob="0.6" />
+		</outputs>
+	</service>
+	<service name="serv18" Res="734.99" Ava="0.79" Suc="0.48" Rel="0.90"
+		Lat="1777.06" Pri="5.50">
+		<inputs>
+			<instance name="inst53" />
+			<instance name="inst54" />
+		</inputs>
+		<outputs>
+			<instance name="inst55" prob="0.4" />
+			<instance name="inst56" prob="0.6" />
+		</outputs>
+	</service>
+	<service name="serv19" Res="2356.74" Ava="0.80" Suc="0.70" Rel="0.60"
+		Lat="2101.11" Pri="10.00">
+		<inputs>
+			<instance name="inst57" />
+			<instance name="inst58" />
+		</inputs>
+		<outputs>
+			<instance name="inst59" prob="0.4" />
+			<instance name="inst60" prob="0.6" />
+		</outputs>
+	</service>
+	<service name="serv20" Res="1256.78" Ava="0.33" Suc="0.91" Rel="0.65"
+		Lat="3808.02" Pri="4.03">
+		<inputs>
+			<instance name="inst61" />
+		</inputs>
+		<outputs>
+			<instance name="inst62" />
+		</outputs>
+	</service>
+	<service name="serv21" Res="300.50" Ava="0.72" Suc="0.41" Rel="0.95"
+		Lat="600.17" Pri="2.90">
+		<inputs>
+			<instance name="inst63" />
+		</inputs>
+		<outputs>
+			<instance name="inst64" />
+		</outputs>
+	</service>
+	<service name="serv22" Res="1402.75" Ava="0.74" Suc="0.39" Rel="0.56"
+		Lat="1699.84" Pri="3.32">
+		<inputs>
+			<instance name="inst65" />
+		</inputs>
+		<outputs>
+			<instance name="inst66" />
+			<instance name="inst67" />
+		</outputs>
+	</service>
+	<service name="serv23" Res="2137.04" Ava="0.99" Suc="0.89" Rel="0.78"
+		Lat="331.42" Pri="2.10">
+		<inputs>
+			<instance name="inst68" />
+		</inputs>
+		<outputs>
+			<instance name="inst69" />
+			<instance name="inst70" />
+		</outputs>
+	</service>
+	<service name="serv24" Res="1456.70" Ava="0.53" Suc="0.62" Rel="0.81"
+		Lat="1002.44" Pri="6.09">
+		<inputs>
+			<instance name="inst71" />
+		</inputs>
+		<outputs>
+			<instance name="inst72" />
+		</outputs>
+	</service>
+	<service name="serv25" Res="2113.66" Ava="0.93" Suc="0.91" Rel="0.19"
+		Lat="304.97" Pri="2.00">
+		<inputs>
+			<instance name="inst73" />
+			<instance name="inst74" />
+		</inputs>
+		<outputs>
+			<instance name="inst75" />
+		</outputs>
+	</service>
+</services>

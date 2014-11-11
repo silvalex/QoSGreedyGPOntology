@@ -95,9 +95,9 @@ public class QoSModel extends GPModel {
 	private boolean recalculateTotals = true;
 
 	// Run settings
-	private static String _servFilename = "services-output.xml";
-	private static String _taskFilename = "problem.xml";
-	private static String _taxonomyFilename = "taxonomy.xml";
+	private static String _servFilename = "dataset.xml";
+	private static String _taskFilename = "taskSet.xml";
+	private static String _taxonomyFilename = "taxonomySet.xml";
 
 	public static String[] INPUT;
 	public static String[] OUTPUT;
