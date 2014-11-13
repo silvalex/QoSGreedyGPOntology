@@ -7,12 +7,8 @@
 		</provided>
 		<options>
 			<condition>
-				<general>
-					<concept name="con0" />
-				</general>
-				<specific>
-					<concept name="con1" />
-				</specific>
+				<general concept="con0" />
+				<specific concept="con1" />
 			</condition>
 			<if>
 				<instance name="inst78" />

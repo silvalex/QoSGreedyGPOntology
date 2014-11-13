@@ -57,10 +57,10 @@ public class GreedyInitialiser implements Initialiser {
 	 * @return root node of candidate tree
 	 */
 	public Node createCandidate() {
+		model.updateInputAndOutput(inputs, outputs);
 		Graph g = null;
-		ForbiddenNodes fn = new ForbiddenNodes();
 		while (g == null) {
-			g = model.createGraph(model.getRelevantServices(), random, fn);
+			g = model.createGraph(model.getRelevantServices(), random);
 		}
         Node tree = g.nodeMap.get("Input").toTree(model.getInputs());
         model.adjustTreeOutputs(tree, QoSModel.getOutputs());

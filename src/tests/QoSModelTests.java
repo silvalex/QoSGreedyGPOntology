@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import gp.ForbiddenNodes;
 import gp.MyRand;
 import gp.QoSModel;
 import graph.Graph;
@@ -127,7 +126,7 @@ public class QoSModelTests {
 	@Test
 	public void testCreateGraph() {
 		List<ServiceNode> relevantServices = model.getRelevantServices();
-		Graph g = model.createGraph(relevantServices, new MyRand(333), new ForbiddenNodes());
+		Graph g = model.createGraph(relevantServices, new MyRand(333));
 		String s = g.toString();
 
 		// Ensure that graph contains input and output nodes
@@ -266,7 +265,7 @@ public class QoSModelTests {
         assertEquals(2, ioSeq.getOutputs().size());
         assertTrue(ioSeq.getOutputs().contains("ArrivalDate"));
         assertTrue(ioSeq.getOutputs().contains("Reservation"));
-        
+
 		children = sequence.getChildren();
 
 		assertEquals(2, children.length);

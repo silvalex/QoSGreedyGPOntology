@@ -55,9 +55,8 @@ public class GreedyMutation implements Mutation{
 		Set<String> outputs = n.getOutputs();
 		model.updateInputAndOutput(inputs, outputs);
 		Graph g = null;
-		ForbiddenNodes fn = new ForbiddenNodes();
 		while (g == null) {
-			g = model.createGraph(model.getRelevantServices(), random, fn);
+			g = model.createGraph(model.getRelevantServices(), random);
 		}
 		// Replacement node
 		Node subtree = g.nodeMap.get("Input").toTree(model.getInputs());

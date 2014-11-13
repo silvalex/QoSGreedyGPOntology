@@ -78,7 +78,7 @@ public class ParallelNode extends Node implements InOutNode {
 	 * @return class
 	 */
 	public Class<?> getReturnType(final Class<?> ... inputTypes) {
-		Properties p = new Properties(null, null, null);
+		Properties p = new Properties(null, null, null, null);
 		return p.getClass();
 	}
 

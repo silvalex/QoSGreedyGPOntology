@@ -1,6 +1,7 @@
 package nodes;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import gp.Properties;
@@ -19,6 +20,8 @@ public class ServiceNode extends Node implements InOutNode {
 	private String name;
 	private Set<String> inputs;
 	private Set<String> outputs;
+	private List<List<String>> outputPossibilities;
+	private List<Float> probabilities;
 	private double[] qos;
 
 	/**
@@ -31,7 +34,8 @@ public class ServiceNode extends Node implements InOutNode {
 	public ServiceNode(String name, Properties p) {
 		this.name = name;
 		inputs = p.getInputs();
-		outputs = p.getOutputs();
+		outputPossibilities = p.getOutputPossibilities();
+		probabilities = p.getProbabilities();
 		qos = p.getQoS();
 	}
 
@@ -78,6 +82,10 @@ public class ServiceNode extends Node implements InOutNode {
 	 */
 	public void setOutputs(Set<String> outputs) {
 		this.outputs = outputs;
+	}
+
+	public List<List<String>> getOutputPossibilities() {
+		return outputPossibilities;
 	}
 
 	/**
@@ -137,7 +145,7 @@ public class ServiceNode extends Node implements InOutNode {
 	 * @return clone
 	 */
 	public ServiceNode clone() {
-		Properties p = new Properties(inputs, outputs, qos);
+		Properties p = new Properties(inputs, outputPossibilities, probabilities, qos);
 		return new ServiceNode(name, p);
 	}
 

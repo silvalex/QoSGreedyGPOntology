@@ -199,10 +199,12 @@
 			<instance name="inst50" />
 		</inputs>
 		<outputs-possibilities>
-		    <outputs prob="1.0">
-				<instance name="inst51" prob="0.4" />
-				<instance name="inst52" prob="0.6" />
-			<outputs>
+		    <outputs prob="0.4">
+				<instance name="inst51" />
+			</outputs>
+			<outputs prob="0.6">
+				<instance name="inst52" />
+			</outputs>
 		</outputs-possibilities>
 	</service>
 	<service name="serv18" Res="734.99" Ava="0.79" Suc="0.48" Rel="0.90"
@@ -212,9 +214,11 @@
 			<instance name="inst54" />
 		</inputs>
 		<outputs-possibilities>
-		    <outputs prob="1.0">
-				<instance name="inst55" prob="0.4" />
-				<instance name="inst56" prob="0.6" />
+		    <outputs prob="0.4">
+				<instance name="inst55" />
+			</outputs>
+			<outputs prob="0.6">
+				<instance name="inst56" />
 			</outputs>
 		</outputs-possibilities>
 	</service>

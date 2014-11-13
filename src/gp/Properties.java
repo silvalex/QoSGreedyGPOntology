@@ -1,5 +1,6 @@
 package gp;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -10,7 +11,8 @@ import java.util.Set;
  */
 public class Properties {
 	private Set<String> inputs;
-	private Set<String> outputs;
+	private List<List<String>> outputPossibilities;
+	private List<Float> probabilities;
 	private double[] qos = new double[4];
 
 	/**
@@ -20,9 +22,10 @@ public class Properties {
 	 * @param outputs
 	 * @param qos
 	 */
-	public Properties(Set<String> inputs, Set<String> outputs, double[] qos) {
+	public Properties(Set<String> inputs, List<List<String>> outputPossibilities, List<Float> probabilities, double[] qos) {
 		this.inputs = inputs;
-		this.outputs = outputs;
+		this.outputPossibilities = outputPossibilities;
+		this.probabilities = probabilities;
 		this.qos = qos;
 	}
 
@@ -36,12 +39,16 @@ public class Properties {
 	}
 
 	/**
-	 * Returns the outputs in this set of properties.
+	 * Returns the output possibilities in this set of properties.
 	 *
-	 * @return outputs
+	 * @return outputPossibilities
 	 */
-	public Set<String> getOutputs() {
-		return outputs;
+	public List<List<String>> getOutputPossibilities() {
+		return outputPossibilities;
+	}
+
+	public List<Float> getProbabilities() {
+		return probabilities;
 	}
 
 	/**
