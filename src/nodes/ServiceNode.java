@@ -1,10 +1,12 @@
 package nodes;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import gp.Properties;
+import gp.QoSModel;
 
 import org.epochx.epox.Node;
 
@@ -19,7 +21,7 @@ import static gp.QoSModel.TIME;
 public class ServiceNode extends Node implements InOutNode {
 	private String name;
 	private Set<String> inputs;
-	private Set<String> outputs;
+	private List<Set<String>> outputs = new ArrayList<Set<String>>();
 	private List<List<String>> outputPossibilities;
 	private List<Float> probabilities;
 	private double[] qos;
@@ -70,22 +72,16 @@ public class ServiceNode extends Node implements InOutNode {
 	/**
 	 * {@inheritDoc}
 	 */
-	public Set<String> getOutputs() {
+	public List<Set<String>> getOutputs() {
 		return outputs;
-	}
-
-	/**
-	 * Sets this node's outputs as the
-	 * provided argument.
-	 *
-	 * @param outputs
-	 */
-	public void setOutputs(Set<String> outputs) {
-		this.outputs = outputs;
 	}
 
 	public List<List<String>> getOutputPossibilities() {
 		return outputPossibilities;
+	}
+
+	public List<Float> getProbabilities() {
+		return probabilities;
 	}
 
 	/**
@@ -104,11 +100,9 @@ public class ServiceNode extends Node implements InOutNode {
 	 * @return evaluation results
 	 */
 	public Object evaluate() {
-		double longestTime = qos[TIME];
-		Set<String> servicesInTree = new HashSet<String>();
-		servicesInTree.add(name);
-
-		return new EvaluationResults(longestTime, servicesInTree);
+		double normalisedTime = (qos[QoSModel.TIME] - QoSModel.MINIMUM_TIME)/(QoSModel.MAXIMUM_TIME - QoSModel.MINIMUM_TIME);
+		double normalisedCost = (qos[QoSModel.COST] - QoSModel.MINIMUM_COST)/(QoSModel.MAXIMUM_COST - QoSModel.MINIMUM_COST);
+		return new EvaluationResults(qos[QoSModel.TIME], qos[QoSModel.COST], qos[QoSModel.RELIABILITY], qos[QoSModel.AVAILABILITY]);
 	}
 
 	@Override

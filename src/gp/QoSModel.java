@@ -83,9 +83,9 @@ public class QoSModel extends GPModel {
 
     /* Available inputs, required outputs, and the dummy service
      * nodes representing them. */
-    private static Set<String> availableInputs;
-    private static Set<String> requiredOutputs;
-    private static Condition condition;
+    private static Set<String> availableInputs = new HashSet<String>();
+    private static Set<String> requiredOutputs = new HashSet<String>();
+    public static Condition condition;
     private ServiceNode inputNode;
     private ServiceNode outputNode;
 
@@ -103,6 +103,10 @@ public class QoSModel extends GPModel {
 	public static String[] INPUT;
 	public static String[] OUTPUT_IF;
 	public static String[] OUTPUT_ELSE;
+	public static double MINIMUM_COST = Double.MAX_VALUE;
+	public static double MINIMUM_TIME = Double.MAX_VALUE;
+	public static double MAXIMUM_COST = Double.MIN_VALUE;
+	public static double MAXIMUM_TIME = Double.MIN_VALUE;
 
 	public static int NUM_RUNS = 50;
 	public static int numServices;
@@ -193,13 +197,18 @@ public class QoSModel extends GPModel {
 		findConceptsForInstances();
 
 		List<List<String>> outList = new ArrayList<List<String>>();
-		outList.add(new ArrayList<String>(availableInputs));
+		List<String> l = new ArrayList<String>();
+		for (String s : INPUT)
+			l.add(s);
+		outList.add(l);
 		List<Float> outProbList = new ArrayList<Float>();
 		outProbList.add(1.0f);
     	inputNode = new ServiceNode("Input", new Properties(new HashSet<String>(), outList, outProbList, new double[]{0,0,1,1}));
-    	inputNode.setOutputs(new HashSet<String>(outList.get(0)));
-    	outputNode = new ServiceNode("Output", new Properties(requiredOutputs, new ArrayList<List<String>>(), new ArrayList<Float>(), new double[]{0,0,1,1}));
-    	outputNode.setOutputs(new HashSet<String>());
+    	inputNode.getOutputs().add(new HashSet<String>(outList.get(0)));
+    	Set<String> l2 = new HashSet<String>();
+    	l2.add(condition.general);
+    	outputNode = new ServiceNode("Output", new Properties(l2, new ArrayList<List<String>>(), new ArrayList<Float>(), new double[]{0,0,1,1}));
+    	outputNode.getOutputs().add(new HashSet<String>());
 
     	populateOutputsInTree();
 
@@ -210,7 +219,7 @@ public class QoSModel extends GPModel {
 		syntax.add(new SequenceNode());
 		syntax.add(new ParallelNode());
 
-		relevantServices = getRelevantServices(serviceMap, availableInputs, requiredOutputs);
+		relevantServices = getRelevantServices(serviceMap, new HashSet<String>(l), new HashSet<String>(l2));
 		recalculateTotals = false;
 
 		// Terminal nodes
@@ -222,7 +231,7 @@ public class QoSModel extends GPModel {
         _logger.log(SETUP, "Filename: " + _servFilename);
         _logger.log(SETUP, "NumServices: " + numServices);
         _logger.log(SETUP, "TaskInput: " + Arrays.toString(INPUT));
-        _logger.log(SETUP, "Condition: output == " + condition.specific + "else");
+        _logger.log(SETUP, "Condition: " + condition.general + " == " + condition.specific);
         _logger.log(SETUP, "TaskOutputIf: " + Arrays.toString(OUTPUT_IF));
         _logger.log(SETUP, "TaskOutputElse: " + Arrays.toString(OUTPUT_ELSE));
         _logger.log(SETUP, "NumRuns: " + NUM_RUNS);
@@ -311,33 +320,9 @@ public class QoSModel extends GPModel {
 	public double getFitness(CandidateProgram program) {
 
         final GPCandidateProgram p = (GPCandidateProgram) program;
-        EvaluationResults results = (EvaluationResults) p.evaluate();
+        EvaluationResults res = (EvaluationResults) p.evaluate();
 
-        double T = results.longestTime;
-        double C = 0;
-        double A = 1;
-        double R = 1;
-
-        for (String name : results.servicesInTree) {
-        	ServiceNode service = serviceMap.get(name);
-
-        	if (service != null) {
-        		double[] qos = service.getQos();
-
-        		C += qos[COST];
-        		A *= qos[AVAILABILITY];
-        		R *= qos[RELIABILITY];
-        	}
-        }
-
-        if (normaliseTotals) {
-	        // Normalise C and T (values between [0,1]) using the sums of all values from services
-	        // that could be possibly in the composition.
-			T = T/_totalTime;
-			C = C/_totalCost;
-        }
-
-		return (w1 * (1 - A) + w2 * (1 - R) + w3 * T + w4 * C);
+		return (w1 * (1 - res.availability) + w2 * (1 - res.reliability) + w3 * res.time + w4 * res.cost);
 	}
 
     @Override
@@ -385,7 +370,7 @@ public class QoSModel extends GPModel {
 	 * @param serviceMap
 	 * @return relevant services
 	 */
-	private List<ServiceNode> getRelevantServices(Map<String,ServiceNode> serviceMap, Set<String> inputs, Set<String> outputs) {
+	public List<ServiceNode> getRelevantServices(Map<String,ServiceNode> serviceMap, Set<String> inputs, Set<String> outputs) {
 		// If we are counting total time and total cost from scratch, reset them
 		if (normaliseTotals && recalculateTotals) {
 			_totalCost = 0.0;
@@ -402,7 +387,7 @@ public class QoSModel extends GPModel {
 			sList.addAll(sFound);
 			services.removeAll(sFound);
 			for (ServiceNode s: sFound) {
-				cSearch.addAll(s.getOutputs());
+				cSearch.addAll(s.getOutputs().get(0));
 				if (normaliseTotals && recalculateTotals) {
 					_totalCost += s.getQos()[COST];
 					_totalTime += s.getQos()[TIME];
@@ -523,9 +508,9 @@ public class QoSModel extends GPModel {
 	    availableInputs.addAll(start.getOutputs());
 
 	    while(!isSubsumed(requiredOutputs,availableInputs)) {
-	        ServiceNode chosen = chooseServiceNode(availableInputs, unused);
+	        ServiceNode chosen = chooseServiceNode(availableInputs, new ArrayList<ServiceNode>(unused), random);
 	        unused.remove( chosen );
-	        availableInputs.addAll(chosen.getOutputs());
+	        availableInputs.addAll(chosen.getOutputs().get(0));
 	        connectChosenNode(chosen, graph);
 	    }
 	    connectChosenNode(outputNode, graph);
@@ -533,7 +518,8 @@ public class QoSModel extends GPModel {
 	    return graph;
 	}
 
-	private ServiceNode chooseServiceNode(Set<String> outputs, Set<ServiceNode> services) {
+	private ServiceNode chooseServiceNode(Set<String> outputs, List<ServiceNode> services, RandomNumberGenerator r) {
+		Collections.shuffle(services, ((MyRand) r).getRandom());
 	    for (ServiceNode n : services) {
 	        if (isSubsumed(n.getInputs(), outputs)) {
 	            return n;
@@ -628,12 +614,12 @@ public class QoSModel extends GPModel {
 	 */
 	private void populateOutputsInTree() {
 		for (ServiceNode s: serviceMap.values()) {
-			for (String outputVal : s.getOutputs())
+			for (String outputVal : s.getOutputs().get(0))
 				taxonomyMap.get(outputVal).services.add(s);
 		}
 
 		// Now add the outputs of the input node
-		for (String outputVal : inputNode.getOutputs())
+		for (String outputVal : inputNode.getOutputs().get(0))
 			taxonomyMap.get(outputVal).services.add(inputNode);
 	}
 
@@ -646,7 +632,7 @@ public class QoSModel extends GPModel {
 	 * @param outputs
 	 */
 	public void updateInputAndOutput(Set<String> inputs, Set<String> outputs) {
-		Set<String> oldInputs = inputNode.getOutputs();
+		Set<String> oldInputs = inputNode.getOutputs().get(0);
 
 		// Remove input node from the old places in the input nodes
 		for (String s : oldInputs)
@@ -654,7 +640,8 @@ public class QoSModel extends GPModel {
 
 		inputNode = inputNode.clone();
 		outputNode = outputNode.clone();
-		inputNode.setOutputs(inputs);
+		inputNode.getOutputs().clear();
+		inputNode.getOutputs().add(inputs);
 		outputNode.setInputs(outputs);
 		availableInputs.clear();
 		availableInputs.addAll(inputs);
@@ -662,7 +649,7 @@ public class QoSModel extends GPModel {
 		requiredOutputs.addAll(outputs);
 
 		// Now add the outputs of the input node
-		for (String outputVal : inputNode.getOutputs())
+		for (String outputVal : inputNode.getOutputs().get(0))
 			taxonomyMap.get(outputVal).services.add(inputNode);
 
 		// Rediscover services fit for the composition
@@ -697,7 +684,15 @@ public class QoSModel extends GPModel {
 
         		String name = eElement.getAttribute("name");
 				qos[TIME] = Double.valueOf(eElement.getAttribute("Res"));
+				if (qos[TIME] > MAXIMUM_TIME)
+					MAXIMUM_TIME = qos[TIME];
+				if (qos[TIME] < MINIMUM_TIME)
+					MINIMUM_TIME = qos[TIME];
 				qos[COST] = Double.valueOf(eElement.getAttribute("Pri"));
+				if (qos[COST] > MAXIMUM_COST)
+					MAXIMUM_COST = qos[COST];
+				if (qos[COST] < MINIMUM_COST)
+					MINIMUM_COST = qos[COST];
 				qos[AVAILABILITY] = Double.valueOf(eElement.getAttribute("Ava"));
 				qos[RELIABILITY] = Double.valueOf(eElement.getAttribute("Rel"));
 
@@ -896,7 +891,8 @@ public class QoSModel extends GPModel {
 
 			// Set the most general concepts of outputs as the non-conditional outputs of a node
 			if (outputs.size() == 1) {
-				s.setOutputs(new HashSet<String>(outputs.get(0)));
+				s.getOutputs().clear();
+				s.getOutputs().add(new HashSet<String>(outputs.get(0)));
 			}
 			else {
 				Set<String> generalOutput = new HashSet<String>();
@@ -907,7 +903,8 @@ public class QoSModel extends GPModel {
 					}
 					generalOutput.add(findMostGeneral(conceptList));
 				}
-				s.setOutputs(generalOutput);
+				s.getOutputs().clear();
+				s.getOutputs().add(new HashSet<String>(generalOutput));
 			}
 		}
 	}
@@ -983,10 +980,10 @@ public class QoSModel extends GPModel {
         if ( !( n instanceof ServiceNode ) ) {
 
             InOutNode ioN = ( InOutNode )n;
-            Set< String > outputs = ioN.getOutputs();
+            Set< String > outputs = ioN.getOutputs().get(0);
             Set< String > satisfied = getSatisfiedInputs( requiredOutputs, outputs );
-            outputs.clear();
-            outputs.addAll( satisfied );
+            ioN.getOutputs().clear();
+            ioN.getOutputs().add( satisfied );
             for ( Node child : n.getChildren() ) {
                 adjustTreeOutputs( child, satisfied );
             }

@@ -76,7 +76,7 @@ public class GraphNode {
 	 * @return outputs
 	 */
 	public Set<String> getOutputs() {
-		return node.getOutputs();
+		return node.getOutputs().get(0);
 	}
 
 	/**
@@ -132,7 +132,7 @@ public class GraphNode {
 			}
 
 		}
-		
+
 		// Go down the tree once again adjusting outputs
 		return root;
 	}
@@ -160,7 +160,7 @@ public class GraphNode {
 	private Node createParallelNode(GraphNode n, List<GraphEdge> childrenGraphNodes, Set<String> parentInput) {
 		Node root = new ParallelNode();
 		Set<String> inputs = ((InOutNode) root).getInputs();
-		Set<String> outputs = ((InOutNode) root).getOutputs();
+		List<Set<String>> outputs = ((InOutNode) root).getOutputs();
 
 		inputs.addAll(n.node.getInputs());
 
@@ -173,7 +173,7 @@ public class GraphNode {
 			children[i] = getNode(child.to, parentInput);
 			//inputs.addAll(child.overlap);
 			inputs.addAll(((InOutNode)children[i]).getInputs());
-			outputs.addAll(((InOutNode)children[i]).getOutputs());
+			outputs.add(((InOutNode)children[i]).getOutputs().get(0));
 		}
 		root.setChildren(children);
 
@@ -200,7 +200,7 @@ public class GraphNode {
 
 		SequenceNode root = new SequenceNode(leftChild, rightChild);
 		Set<String> inputs = ((InOutNode) root).getInputs();
-		Set<String> outputs = ((InOutNode) root).getOutputs();
+		List<Set<String>> outputs = ((InOutNode) root).getOutputs();
 
 		inputs.addAll(((InOutNode)leftChild).getInputs());
 		inputs.addAll(parentInput);
@@ -208,8 +208,8 @@ public class GraphNode {
 //		for (GraphEdge e : from) {
 //			inputs.addAll(e.overlap);
 //		}
-		outputs.addAll(((InOutNode)rightChild).getOutputs());
-		outputs.addAll(additionalOutput);
+		outputs.add(((InOutNode)rightChild).getOutputs().get(0));
+		outputs.get(0).addAll(additionalOutput);
 
 		return root;
 	}

@@ -1,6 +1,8 @@
 package nodes;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import gp.Properties;
@@ -15,7 +17,7 @@ import org.epochx.epox.Node;
  */
 public class ParallelNode extends Node implements InOutNode {
 	private Set<String> inputs;
-	private Set<String> outputs;
+	private List<Set<String>> outputs;
 
 	/**
 	 * Creates an empty ParallelNode instance.
@@ -34,7 +36,7 @@ public class ParallelNode extends Node implements InOutNode {
 	public ParallelNode(final Node child1, final Node child2) {
 		super(child1, child2);
 		inputs = new HashSet<String>();
-		outputs = new HashSet<String>();
+		outputs = new ArrayList<Set<String>>();
 	}
 
 	@Override
@@ -46,17 +48,21 @@ public class ParallelNode extends Node implements InOutNode {
 	 * @return evaluation results
 	 */
 	public Object evaluate() {
-		double longestTime = -1.0;
-		Set<String> servicesInTree = new HashSet<String>();
+		EvaluationResults res = new EvaluationResults();
 
+		double longestTime = -1.0;
 		for (Node child : getChildren()) {
 			EvaluationResults results = (EvaluationResults) child.evaluate();
-			if (results.longestTime > longestTime)
-				longestTime = results.longestTime;
-			servicesInTree.addAll(results.servicesInTree);
+			if (results.time > longestTime)
+				longestTime = results.time;
+			res.cost += results.cost;
+			res.reliability *= results.reliability;
+			res.availability *= results.availability;
 		}
 
-		return new EvaluationResults(longestTime, servicesInTree);
+		res.time = longestTime;
+		res.cost /= getChildren().length;
+		return res;
 	}
 
 	@Override
@@ -113,7 +119,7 @@ public class ParallelNode extends Node implements InOutNode {
 	/**
 	 * {@InheritDoc}
 	 */
-	public Set<String> getOutputs() {
+	public List<Set<String>> getOutputs() {
 		return outputs;
 	}
 }
