@@ -16,6 +16,10 @@ public class ConditionalNode extends Node implements InOutNode {
 	private Set<String> inputs;
 	private List<Set<String>> outputs;
 
+	public ConditionalNode() {
+		this(null, null, null);
+	}
+
 	/**
 	 * Creates an empty ParallelNode instance.
 	 */

@@ -37,10 +37,10 @@ public class ServiceNode extends Node implements InOutNode {
 		this.name = name;
 		inputs = p.getInputs();
 		outputPossibilities = p.getOutputPossibilities();
-		outputs = new ArrayList<Set<String>>();
-
-		for (List<String> o : p.getOutputPossibilities())
-			outputs.add(new HashSet<String>(o));
+//		outputs = new ArrayList<Set<String>>();
+//
+//		for (List<String> o : p.getOutputPossibilities())
+//			outputs.add(new HashSet<String>(o));
 		probabilities = p.getProbabilities();
 		qos = p.getQoS();
 	}
@@ -144,7 +144,9 @@ public class ServiceNode extends Node implements InOutNode {
 	 */
 	public ServiceNode clone() {
 		Properties p = new Properties(inputs, outputPossibilities, probabilities, qos);
-		return new ServiceNode(name, p);
+		ServiceNode s = new ServiceNode(name, p);
+		s.outputs = outputs;
+		return s;
 	}
 
 	@Override

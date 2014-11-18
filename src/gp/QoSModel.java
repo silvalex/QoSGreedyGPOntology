@@ -68,7 +68,6 @@ public class QoSModel extends GPModel {
 	// Node data structures for composition generation
 	private Map<String, ServiceNode> serviceMap = new HashMap<String, ServiceNode>();
 	private List<ServiceNode> relevantServices;
-//	private Map<String, List<Node>> outputMap = new HashMap<String, List<Node>>();
 	private Map<String, TaxonomyNode> taxonomyMap = new HashMap<String, TaxonomyNode>();
 
 	// Fitness function weights
@@ -100,7 +99,9 @@ public class QoSModel extends GPModel {
 
 	// Run settings
 	private static String _servFilename = "dataset.xml";
-	private static String _taskFilename = "taskSet.xml";
+	private static String _taskFilename = "taskSetNoCondition.xml"; //XXX
+	//private static String _taskFilename = "taskSet.xml";
+	//private static String _taskFilename = "taskSetNoCondition2.xml";
 	private static String _taxonomyFilename = "taxonomySet.xml";
 
 	public static String[] INPUT;
@@ -199,18 +200,25 @@ public class QoSModel extends GPModel {
 		parseWSCTaxonomyFile(_taxonomyFilename);
 		findConceptsForInstances();
 
-		List<List<String>> outList = new ArrayList<List<String>>();
-		List<String> l = new ArrayList<String>();
-		for (String s : INPUT)
-			l.add(s);
-		outList.add(l);
-		List<Float> outProbList = new ArrayList<Float>();
-		outProbList.add(1.0f);
-    	inputNode = new ServiceNode("Input", new Properties(new HashSet<String>(), outList, outProbList, new double[]{0,0,1,1}));
-    	inputNode.getOutputs().add(new HashSet<String>(outList.get(0)));
-    	Set<String> l2 = new HashSet<String>();
-    	l2.add(condition.general);
-    	outputNode = new ServiceNode("Output", new Properties(l2, new ArrayList<List<String>>(), new ArrayList<Float>(), new double[]{0,0,1,1}));
+//		List<List<String>> outList = new ArrayList<List<String>>();
+//		List<String> l = new ArrayList<String>();
+//		for (String s : INPUT)
+//			l.add(s);
+//		outList.add(l);
+//		List<Float> outProbList = new ArrayList<Float>();
+//		outProbList.add(1.0f);
+//    	inputNode = new ServiceNode("Input", new Properties(new HashSet<String>(), outList, outProbList, new double[]{0,0,1,1}));
+//    	inputNode.getOutputs().add(new HashSet<String>(outList.get(0)));
+//    	Set<String> l2 = new HashSet<String>();
+//    	l2.add(condition.general);
+//    	outputNode = new ServiceNode("Output", new Properties(l2, new ArrayList<List<String>>(), new ArrayList<Float>(), new double[]{0,0,1,1}));
+//    	outputNode.getOutputs().add(new HashSet<String>());
+
+		List<Float> probList = new ArrayList<Float>();
+		probList.add(1.0f);
+    	inputNode = new ServiceNode("Input", new Properties(new HashSet<String>(), new ArrayList<List<String>>(), probList, new double[]{0,0,1,1}));
+    	inputNode.getOutputs().add(new HashSet<String>());
+    	outputNode = new ServiceNode("Output", new Properties(new HashSet<String>(), new ArrayList<List<String>>(), probList, new double[]{0,0,1,1}));
     	outputNode.getOutputs().add(new HashSet<String>());
 
     	populateOutputsInTree();
@@ -221,12 +229,13 @@ public class QoSModel extends GPModel {
 		// Function nodes
 		syntax.add(new SequenceNode());
 		syntax.add(new ParallelNode());
+		syntax.add(new ConditionalNode());
 
-		relevantServices = getRelevantServices(serviceMap, new HashSet<String>(l), new HashSet<String>(l2));
+//		relevantServices = getRelevantServices(serviceMap, new HashSet<String>(l), new HashSet<String>(l2));
 		recalculateTotals = false;
 
 		// Terminal nodes
-		for (ServiceNode s : relevantServices) {
+		for (ServiceNode s : serviceMap.values()) {
 			syntax.add(s);
 		}
 
@@ -445,6 +454,21 @@ public class QoSModel extends GPModel {
 		}
 	}
 
+	public Node replaceServicesInTree(Node root, ServiceNode toReplace, ServiceNode replacement) {
+		// If root is the node to be replaced
+		if (root.getIdentifier().equals(toReplace.getName())) {
+			return replacement;
+		}
+		// Else try to replace the children of this node, if any
+		else {
+			Node[] children = root.getChildren();
+			for (int i = 0; i < children.length; i++) {
+				children[i] = replaceServicesInTree(children[i], toReplace, replacement);
+			}
+			return root;
+		}
+	}
+
 	/**
 	 * Discovers all services from the provided collection whose
 	 * input can be satisfied either (a) by the input provided in
@@ -575,34 +599,34 @@ public class QoSModel extends GPModel {
 	    }
 	}
 
-	public Node createTree(Set<String> inputs, List<Set<String>> outputs, RandomNumberGenerator random, float[] probabilities) {
+	public Node createTree(Set<String> inputs, List<Set<String>> outputPossibilities, RandomNumberGenerator random, float[] probabilities) {
 		// Create a conditional node if necessary
-		if (outputs.size() > 1) {
+		if (outputPossibilities.size() > 1) {
 	        // Create subtree from the condition's specific value to if-output
 	        Set<String> condInputs = new HashSet<String>();
 	        condInputs.add(QoSModel.condition.specific);
 
-			updateInputAndOutput(condInputs, outputs.get(0));
+			updateInputAndOutput(condInputs, outputPossibilities.get(0));
 
 			Graph ifGraph = null;
 			while (ifGraph == null) {
-				ifGraph = createGraph(getRelevantServices(getServices(), condInputs, outputs.get(0)), random);
+				ifGraph = createGraph(getRelevantServices(getServices(), condInputs, outputPossibilities.get(0)), random);
 			}
 	        Node ifTree = ifGraph.nodeMap.get("Input").toTree(getInputs());
-	        adjustTreeOutputs(ifTree, outputs.get(0));
+	        adjustTreeOutputs(ifTree, outputPossibilities.get(0));
 
 	        // Create subtree from the condition's general value to else-output
 	        condInputs = new HashSet<String>();
 	        condInputs.add(QoSModel.condition.general);
 
-			updateInputAndOutput(condInputs, outputs.get(1));
+			updateInputAndOutput(condInputs, outputPossibilities.get(1));
 
 			Graph elseGraph = null;
 			while (elseGraph == null) {
-				elseGraph = createGraph(getRelevantServices(getServices(), condInputs, outputs.get(1)), random);
+				elseGraph = createGraph(getRelevantServices(getServices(), condInputs, outputPossibilities.get(1)), random);
 			}
 	        Node elseTree = elseGraph.nodeMap.get("Input").toTree(getInputs());
-	        adjustTreeOutputs(elseTree, outputs.get(1));
+	        adjustTreeOutputs(elseTree, outputPossibilities.get(1));
 
 
 			// XXX: Assumption that ServiceNode outputs and probabilities are ordered from the most specific to the most
@@ -614,8 +638,8 @@ public class QoSModel extends GPModel {
 
 	        conditionalTree.getInputs().clear();
 	        conditionalTree.getInputs().add(QoSModel.condition.general);
-	        conditionalTree.getOutputs().add(outputs.get(0));
-	        conditionalTree.getOutputs().add(outputs.get(1));
+	        conditionalTree.getOutputs().add(outputPossibilities.get(0));
+	        conditionalTree.getOutputs().add(outputPossibilities.get(1));
 
 	        // Create a non-conditional part to the tree if necessary
 	        condInputs = new HashSet<String>();
@@ -648,21 +672,21 @@ public class QoSModel extends GPModel {
 	        	tree.setChild(1, conditionalTree);
 	        	tree.getInputs().clear();
 	        	tree.getInputs().addAll(inputs);
-	        	tree.getOutputs().add(outputs.get(0));
-	        	tree.getOutputs().add(outputs.get(1));
+	        	tree.getOutputs().add(outputPossibilities.get(0));
+	        	tree.getOutputs().add(outputPossibilities.get(1));
 	        	return tree;
 	        }
 		}
 		else {
-        	updateInputAndOutput(inputs, outputs.get(0));
+        	updateInputAndOutput(inputs, outputPossibilities.get(0));
 
         	Graph simpleGraph = null;
         	while (simpleGraph == null) {
-        		simpleGraph = createGraph(getRelevantServices(getServices(), inputs, outputs.get(0)), random);
+        		simpleGraph = createGraph(getRelevantServices(getServices(), inputs, outputPossibilities.get(0)), random);
         	}
         	Node simpleTree = simpleGraph.nodeMap.get("Input").toTree(getInputs());
         	Set<String> correctionSet = new HashSet<String>();
-	        correctionSet.addAll(outputs.get(0));
+	        correctionSet.addAll(outputPossibilities.get(0));
         	adjustTreeOutputs(simpleTree, correctionSet);
         	return simpleTree;
 		}

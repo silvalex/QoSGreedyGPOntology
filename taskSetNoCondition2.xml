@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problemStructure>
+	<task>
+		<provided>
+			<instance name="inst1" />
+			<instance name="inst2" />
+		</provided>
+		<options>
+			<condition>
+				<general concept="dummy" />
+				<specific concept="dummy" />
+			</condition>
+			<if>
+			    <instance name="inst19" />
+			</if>
+			<else />
+		</options>
+	</task>
+	<solutions />
+</problemStructure>
