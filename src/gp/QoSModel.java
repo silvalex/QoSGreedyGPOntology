@@ -4,6 +4,7 @@ import graph.Graph;
 import graph.GraphEdge;
 import graph.GraphNode;
 import nodes.*;
+
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -28,11 +29,13 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
+
 import taxonomy.TaxonomyNode;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -570,6 +573,101 @@ public class QoSModel extends GPModel {
 	            removeDangling(e.from, graph);
 	        }
 	    }
+	}
+
+	public Node createTree(Set<String> inputs, List<Set<String>> outputs, RandomNumberGenerator random, float[] probabilities) {
+		// Create a conditional node if necessary
+		if (outputs.size() > 1) {
+	        // Create subtree from the condition's specific value to if-output
+	        Set<String> condInputs = new HashSet<String>();
+	        condInputs.add(QoSModel.condition.specific);
+
+			updateInputAndOutput(condInputs, outputs.get(0));
+
+			Graph ifGraph = null;
+			while (ifGraph == null) {
+				ifGraph = createGraph(getRelevantServices(getServices(), condInputs, outputs.get(0)), random);
+			}
+	        Node ifTree = ifGraph.nodeMap.get("Input").toTree(getInputs());
+	        adjustTreeOutputs(ifTree, outputs.get(0));
+
+	        // Create subtree from the condition's general value to else-output
+	        condInputs = new HashSet<String>();
+	        condInputs.add(QoSModel.condition.general);
+
+			updateInputAndOutput(condInputs, outputs.get(1));
+
+			Graph elseGraph = null;
+			while (elseGraph == null) {
+				elseGraph = createGraph(getRelevantServices(getServices(), condInputs, outputs.get(1)), random);
+			}
+	        Node elseTree = elseGraph.nodeMap.get("Input").toTree(getInputs());
+	        adjustTreeOutputs(elseTree, outputs.get(1));
+
+
+			// XXX: Assumption that ServiceNode outputs and probabilities are ordered from the most specific to the most
+			// general option.
+
+	        ConditionalNode conditionalTree = new ConditionalNode(QoSModel.condition);
+	        conditionalTree.setChild(0, ifTree);
+	        conditionalTree.setChild(1, elseTree);
+
+	        conditionalTree.getInputs().clear();
+	        conditionalTree.getInputs().add(QoSModel.condition.general);
+	        conditionalTree.getOutputs().add(outputs.get(0));
+	        conditionalTree.getOutputs().add(outputs.get(1));
+
+	        // Create a non-conditional part to the tree if necessary
+	        condInputs = new HashSet<String>();
+	        condInputs.add(QoSModel.condition.general);
+	        if (isSubsumed(condInputs, inputs)) {
+	        	conditionalTree.setProbabilities(probabilities);
+	        	return conditionalTree;
+	        }
+	        else {
+	        	updateInputAndOutput(inputs, condInputs);
+
+	        	Graph initialGraph = null;
+	        	while (initialGraph == null) {
+	        		initialGraph = createGraph(getRelevantServices(getServices(), inputs, condInputs), random);
+	        	}
+	        	Node initialTree = initialGraph.nodeMap.get("Input").toTree(getInputs());
+	        	adjustTreeOutputs(initialTree, condInputs);
+
+	        	// XXX: Assumption that there is only one node that produces the output for the condition,
+	        	// and that this node has probabilities that match the specific/general alternatives of condition.
+	        	List<Float> probs = initialGraph.nodeMap.get("Output").from.get(0).from.node.getProbabilities();
+	        	probabilities = new float[2];
+	        	probabilities[0] = probs.get(0);
+	        	probabilities[1] = probs.get(1);
+	        	conditionalTree.setProbabilities(probabilities);
+
+	        	// Assemble overall tree
+	        	SequenceNode tree = new SequenceNode();
+	        	tree.setChild(0, initialTree);
+	        	tree.setChild(1, conditionalTree);
+	        	tree.getInputs().clear();
+	        	tree.getInputs().addAll(inputs);
+	        	tree.getOutputs().add(outputs.get(0));
+	        	tree.getOutputs().add(outputs.get(1));
+	        	return tree;
+	        }
+		}
+		else {
+        	updateInputAndOutput(inputs, outputs.get(0));
+
+        	Graph simpleGraph = null;
+        	while (simpleGraph == null) {
+        		simpleGraph = createGraph(getRelevantServices(getServices(), inputs, outputs.get(0)), random);
+        	}
+        	Node simpleTree = simpleGraph.nodeMap.get("Input").toTree(getInputs());
+        	Set<String> correctionSet = new HashSet<String>();
+	        correctionSet.addAll(outputs.get(0));
+        	adjustTreeOutputs(simpleTree, correctionSet);
+        	return simpleTree;
+		}
+
+
 	}
 
 	/**

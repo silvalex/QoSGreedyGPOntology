@@ -37,6 +37,10 @@ public class ServiceNode extends Node implements InOutNode {
 		this.name = name;
 		inputs = p.getInputs();
 		outputPossibilities = p.getOutputPossibilities();
+		outputs = new ArrayList<Set<String>>();
+
+		for (List<String> o : p.getOutputPossibilities())
+			outputs.add(new HashSet<String>(o));
 		probabilities = p.getProbabilities();
 		qos = p.getQoS();
 	}
@@ -102,7 +106,7 @@ public class ServiceNode extends Node implements InOutNode {
 	public Object evaluate() {
 		double normalisedTime = (qos[QoSModel.TIME] - QoSModel.MINIMUM_TIME)/(QoSModel.MAXIMUM_TIME - QoSModel.MINIMUM_TIME);
 		double normalisedCost = (qos[QoSModel.COST] - QoSModel.MINIMUM_COST)/(QoSModel.MAXIMUM_COST - QoSModel.MINIMUM_COST);
-		return new EvaluationResults(qos[QoSModel.TIME], qos[QoSModel.COST], qos[QoSModel.RELIABILITY], qos[QoSModel.AVAILABILITY]);
+		return new EvaluationResults(normalisedTime, normalisedCost, qos[QoSModel.RELIABILITY], qos[QoSModel.AVAILABILITY]);
 	}
 
 	@Override

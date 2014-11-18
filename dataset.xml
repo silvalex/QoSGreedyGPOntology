@@ -55,11 +55,11 @@
 			<instance name="inst16" />
 		</inputs>
 		<outputs-possibilities>
-		    <outputs prob="0.4">
-				<instance name="inst17" />
-		    </outputs>
 		    <outputs prob="0.6">
 				<instance name="inst18" />
+		    </outputs>
+		    <outputs prob="0.4">
+				<instance name="inst17" />
 		    </outputs>
 		</outputs-possibilities>
 	</service>
@@ -199,11 +199,11 @@
 			<instance name="inst50" />
 		</inputs>
 		<outputs-possibilities>
-		    <outputs prob="0.4">
-				<instance name="inst51" />
-			</outputs>
 			<outputs prob="0.6">
 				<instance name="inst52" />
+			</outputs>
+		    <outputs prob="0.4">
+				<instance name="inst51" />
 			</outputs>
 		</outputs-possibilities>
 	</service>
@@ -214,11 +214,11 @@
 			<instance name="inst54" />
 		</inputs>
 		<outputs-possibilities>
-		    <outputs prob="0.4">
-				<instance name="inst55" />
-			</outputs>
 			<outputs prob="0.6">
 				<instance name="inst56" />
+			</outputs>
+		    <outputs prob="0.4">
+				<instance name="inst55" />
 			</outputs>
 		</outputs-possibilities>
 	</service>
@@ -229,11 +229,11 @@
 			<instance name="inst58" />
 		</inputs>
 		<outputs-possibilities>
-		    <outputs prob="0.4">
-				<instance name="inst59" />
-			</outputs>
 			<outputs prob="0.6">
 				<instance name="inst60" />
+			</outputs>
+		    <outputs prob="0.4">
+				<instance name="inst59" />
 			</outputs>
 		</outputs-possibilities>
 	</service>

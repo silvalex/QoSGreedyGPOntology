@@ -12,15 +12,15 @@ import org.epochx.epox.Node;
 
 public class ConditionalNode extends Node implements InOutNode {
 	private Condition condition;
-	private Float[] probabilities;
+	private float[] probabilities;
 	private Set<String> inputs;
 	private List<Set<String>> outputs;
 
 	/**
 	 * Creates an empty ParallelNode instance.
 	 */
-	public ConditionalNode(Condition condition, ServiceNode serv) {
-		this(condition, serv, null, null);
+	public ConditionalNode(Condition condition) {
+		this(condition, null, null);
 	}
 
 	/**
@@ -30,16 +30,19 @@ public class ConditionalNode extends Node implements InOutNode {
 	 * @param child1
 	 * @param child2
 	 */
-	public ConditionalNode(Condition condition, ServiceNode serv, final Node child1, final Node child2) {
+	public ConditionalNode(Condition condition, final Node child1, final Node child2) {
 		super(child1, child2);
 		this.condition = condition;
-		// XXX: Assumption that ServiceNode outputs and probabilities are ordered from the most general to the most
-		// specific option. We want to order it the other way round.
-		probabilities = new Float[2];
-		probabilities[0] = serv.getProbabilities().get(1);
-		probabilities[1] = serv.getProbabilities().get(0);
 		inputs = new HashSet<String>();
 		outputs = new ArrayList<Set<String>>();
+	}
+
+	public void setProbabilities(float[] probabilities) {
+		this.probabilities = probabilities;
+	}
+
+	public float[] getProbabilities() {
+		return probabilities;
 	}
 
 	@Override

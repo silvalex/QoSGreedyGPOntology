@@ -2,8 +2,10 @@ package gp;
 
 import graph.Graph;
 
+import java.util.List;
 import java.util.Set;
 
+import nodes.ConditionalNode;
 import nodes.InOutNode;
 
 import org.epochx.epox.Node;
@@ -50,17 +52,15 @@ public class GreedyMutation implements Mutation{
 
 		// Node to replace
 		InOutNode n = (InOutNode) p.getNthNode(index);
+		float[] probs = null;
+		if (n instanceof ConditionalNode) {
+			probs = ((ConditionalNode) n).getProbabilities();
+		}
 
 		Set<String> inputs = n.getInputs();
-		Set<String> outputs = n.getOutputs();
-		model.updateInputAndOutput(inputs, outputs);
-		Graph g = null;
-		while (g == null) {
-			g = model.createGraph(model.getRelevantServices(), random);
-		}
-		// Replacement node
-		Node subtree = g.nodeMap.get("Input").toTree(model.getInputs());
-		model.adjustTreeOutputs(subtree, QoSModel.getOutputs());
+		List<Set<String>> outputs = n.getOutputs();
+		Node subtree = model.createTree(inputs, outputs, random, probs);
+
 		// Search for the node to replace with mutated subtree
 		Node root = model.replaceSubtree(p.getRootNode(), (Node)n, subtree);
 
