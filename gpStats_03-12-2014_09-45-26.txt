@@ -1,0 +1,30 @@
+SETUP - Filename: ../wsc2008/Set06MetaData/services-prob.xml
+SETUP - NumServices: 2198
+SETUP - TaskInput: [con1927582736, con2066855250, con1482928259, con1174685776, con1929429507, con1036639498, con683948594, con1055275345, con74623429, con387577463, con968433539, con1757794541, con1719698307]
+SETUP - Condition: con1213600198 == con1074735732
+SETUP - TaskOutputIf: [con502890526, con523575057, con289061958, con249121045]
+SETUP - TaskOutputElse: [con1470028324, con844723827, con715692641, con2056205874, con1893579648, con2005411618, con546108451]
+SETUP - NumRuns: 50
+SETUP - populationSize: 20
+SETUP - MaxNumIterations: 50
+SETUP - MaxInitialDepth: -1
+SETUP - MaxDepth: -1
+SETUP - CrossoverProb: 0.9
+SETUP - MutationProb: 0.1
+SETUP - NoElites: 1
+SETUP - fitness_W1: 0.25
+SETUP - fitness_W2: 0.25
+SETUP - fitness_W3: 0.25
+SETUP - fitness_W4: 0.25
+
+POSTRUN - BestOverallFitness: 0.6427889804122919
+POSTRUN - BestOverallProgram: SEQUENCE (SEQUENCE (serv1414722300 serv98786923) CONDITIONAL{con1213600198=con1074735732} (serv603450493 SEQUENCE (serv930335175 serv307083622)))
+
+Performance Statistics   2014-12-03 07:00:00 - 2014-12-03 10:00:00
+Tag                                                  Avg(ms)         Min         Max     Std Dev       Count
+RunTime                                              92392.3       65040      106505     11353.2          10
+
+Performance Statistics   2014-12-03 10:00:00 - 2014-12-03 13:00:00
+Tag                                                  Avg(ms)         Min         Max     Std Dev       Count
+RunTime                                              87998.3       72283      120275      9396.5          40
+

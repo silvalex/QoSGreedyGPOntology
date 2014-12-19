@@ -98,11 +98,11 @@ public class QoSModel extends GPModel {
 	private boolean recalculateTotals = true;
 
 	// Run settings
-	private static String _servFilename = "dataset.xml";
-	private static String _taskFilename = "taskSetNoCondition.xml"; //XXX
+	private static String _servFilename = "services-prob.xml";
+	private static String _taskFilename = "problem-prob.xml"; //XXX
 	//private static String _taskFilename = "taskSet.xml";
 	//private static String _taskFilename = "taskSetNoCondition2.xml";
-	private static String _taxonomyFilename = "taxonomySet.xml";
+	private static String _taxonomyFilename = "taxonomy.xml";
 
 	public static String[] INPUT;
 	public static String[] OUTPUT_IF;
@@ -414,7 +414,7 @@ public class QoSModel extends GPModel {
 		}
 		else {
 			String message = "It is impossible to perform a composition using the services and settings provided.";
-			System.out.println(message);
+			System.err.println(message);
 			System.exit(0);
 			return null;
 		}
@@ -526,7 +526,7 @@ public class QoSModel extends GPModel {
 		return satisfied;
 	}
 
-	public Graph createGraph(List<ServiceNode> services, RandomNumberGenerator random) {
+	public Graph createGraph(List<ServiceNode> services, RandomNumberGenerator random, boolean exactOutput) {
 	    Graph graph = new Graph();
 	    Set<ServiceNode> unused = new HashSet<ServiceNode>(services);
 	    GraphNode start = new GraphNode(inputNode, this);
@@ -564,14 +564,16 @@ public class QoSModel extends GPModel {
 	            if (gn != graphNode) {
     	            Set<String> intersect = getSatisfiedInputs(inputs, new HashSet<String>(gn.getOutputs()));
     	            if (!intersect.isEmpty()) {
-    	                GraphEdge edge = new GraphEdge(intersect);
-    	                edge.from = gn;
-    	                edge.to = graphNode;
-    	                gn.to.add( edge );
-    	                graphNode.from.add( edge );
-    	                graph.edges.add( edge );
+    	            	if (!(gn.getName().equals("Input") && node.getName().equals("Output"))) {
+    	            		GraphEdge edge = new GraphEdge(intersect);
+    	            		edge.from = gn;
+    	            		edge.to = graphNode;
+    	            		gn.to.add( edge );
+    	            		graphNode.from.add( edge );
+    	            		graph.edges.add( edge );
+    	            	}
+    	            	inputs.removeAll(intersect);
     	            }
-    	            inputs.removeAll(intersect);
 	            }
 	        }
 	    }
@@ -594,6 +596,7 @@ public class QoSModel extends GPModel {
 	        graph.nodeMap.remove( n.getName() );
 	        for (GraphEdge e : n.from) {
 	            e.from.to.remove( e );
+	            graph.edges.remove( e );
 	            removeDangling(e.from, graph);
 	        }
 	    }
@@ -605,12 +608,12 @@ public class QoSModel extends GPModel {
 	        // Create subtree from the condition's specific value to if-output
 	        Set<String> condInputs = new HashSet<String>();
 	        condInputs.add(QoSModel.condition.specific);
-
+	        condInputs.addAll(inputs);
 			updateInputAndOutput(condInputs, outputPossibilities.get(0));
 
 			Graph ifGraph = null;
 			while (ifGraph == null) {
-				ifGraph = createGraph(getRelevantServices(getServices(), condInputs, outputPossibilities.get(0)), random);
+				ifGraph = createGraph(getRelevantServices(getServices(), condInputs, outputPossibilities.get(0)), random, false);
 			}
 	        Node ifTree = ifGraph.nodeMap.get("Input").toTree(getInputs());
 	        adjustTreeOutputs(ifTree, outputPossibilities.get(0));
@@ -618,12 +621,12 @@ public class QoSModel extends GPModel {
 	        // Create subtree from the condition's general value to else-output
 	        condInputs = new HashSet<String>();
 	        condInputs.add(QoSModel.condition.general);
-
+	        condInputs.addAll(inputs);
 			updateInputAndOutput(condInputs, outputPossibilities.get(1));
 
 			Graph elseGraph = null;
 			while (elseGraph == null) {
-				elseGraph = createGraph(getRelevantServices(getServices(), condInputs, outputPossibilities.get(1)), random);
+				elseGraph = createGraph(getRelevantServices(getServices(), condInputs, outputPossibilities.get(1)), random, false);
 			}
 	        Node elseTree = elseGraph.nodeMap.get("Input").toTree(getInputs());
 	        adjustTreeOutputs(elseTree, outputPossibilities.get(1));
@@ -638,6 +641,7 @@ public class QoSModel extends GPModel {
 
 	        conditionalTree.getInputs().clear();
 	        conditionalTree.getInputs().add(QoSModel.condition.general);
+	        conditionalTree.getInputs().addAll(inputs);
 	        conditionalTree.getOutputs().add(outputPossibilities.get(0));
 	        conditionalTree.getOutputs().add(outputPossibilities.get(1));
 
@@ -653,7 +657,7 @@ public class QoSModel extends GPModel {
 
 	        	Graph initialGraph = null;
 	        	while (initialGraph == null) {
-	        		initialGraph = createGraph(getRelevantServices(getServices(), inputs, condInputs), random);
+	        		initialGraph = createGraph(getRelevantServices(getServices(), inputs, condInputs), random, false);
 	        	}
 	        	Node initialTree = initialGraph.nodeMap.get("Input").toTree(getInputs());
 	        	adjustTreeOutputs(initialTree, condInputs);
@@ -682,7 +686,7 @@ public class QoSModel extends GPModel {
 
         	Graph simpleGraph = null;
         	while (simpleGraph == null) {
-        		simpleGraph = createGraph(getRelevantServices(getServices(), inputs, outputPossibilities.get(0)), random);
+        		simpleGraph = createGraph(getRelevantServices(getServices(), inputs, outputPossibilities.get(0)), random, false);
         	}
         	Node simpleTree = simpleGraph.nodeMap.get("Input").toTree(getInputs());
         	Set<String> correctionSet = new HashSet<String>();
@@ -856,13 +860,13 @@ public class QoSModel extends GPModel {
     		numServices = serviceMap.size();
         }
         catch(IOException ioe) {
-            System.out.println("Service file parsing failed...");
+            System.err.println("Service file parsing failed...");
         }
         catch (ParserConfigurationException e) {
-            System.out.println("Service file parsing failed...");
+            System.err.println("Service file parsing failed...");
 		}
         catch (SAXException e) {
-            System.out.println("Service file parsing failed...");
+            System.err.println("Service file parsing failed...");
 		}
 		numServices = serviceMap.size();
     }
@@ -915,13 +919,13 @@ public class QoSModel extends GPModel {
 	    	}
 		}
 		catch (ParserConfigurationException e) {
-            System.out.println("Task file parsing failed...");
+            System.err.println("Task file parsing failed...");
 		}
 		catch (SAXException e) {
-            System.out.println("Task file parsing failed...");
+            System.err.println("Task file parsing failed...");
 		}
 		catch (IOException e) {
-            System.out.println("Task file parsing failed...");
+            System.err.println("Task file parsing failed...");
 		}
 	}
 
@@ -943,13 +947,13 @@ public class QoSModel extends GPModel {
 		}
 
 		catch (ParserConfigurationException e) {
-            System.out.println("Taxonomy file parsing failed...");
+            System.err.println("Taxonomy file parsing failed...");
 		}
 		catch (SAXException e) {
-            System.out.println("Taxonomy file parsing failed...");
+            System.err.println("Taxonomy file parsing failed...");
 		}
 		catch (IOException e) {
-            System.out.println("Taxonomy file parsing failed...");
+            System.err.println("Taxonomy file parsing failed...");
 		}
 	}
 
