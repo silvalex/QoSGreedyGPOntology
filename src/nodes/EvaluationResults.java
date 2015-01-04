@@ -12,8 +12,10 @@ import java.util.Set;
  * @author sawczualex
  */
 public class EvaluationResults {
-	public double longestTime = 0.0;
-	public Set<String> servicesInTree = new HashSet<String>();
+	public double time = 0.0;
+	public double cost = 0.0;
+	public double reliability = 1.0;
+	public double availability = 1.0;
 
 	/**
 	 * Creates an empty instance of EvaluationResults.
@@ -23,12 +25,11 @@ public class EvaluationResults {
 	/**
 	 * Creates an EvaluationResults instance that holds
 	 * the values provided as arguments.
-	 *
-	 * @param longestTime
-	 * @param servicesInTree
 	 */
-	public EvaluationResults(double longestTime, Set<String> servicesInTree) {
-		this.longestTime = longestTime;
-		this.servicesInTree = servicesInTree;
+	public EvaluationResults(double time, double cost, double reliability, double availability) {
+		this.time = time;
+		this.cost = cost;
+		this.reliability = reliability;
+		this.availability = availability;
 	}
 }

@@ -4,6 +4,7 @@ import graph.Graph;
 import graph.GraphEdge;
 import graph.GraphNode;
 import nodes.*;
+
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -28,11 +29,13 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
+
 import taxonomy.TaxonomyNode;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -65,7 +68,6 @@ public class QoSModel extends GPModel {
 	// Node data structures for composition generation
 	private Map<String, ServiceNode> serviceMap = new HashMap<String, ServiceNode>();
 	private List<ServiceNode> relevantServices;
-//	private Map<String, List<Node>> outputMap = new HashMap<String, List<Node>>();
 	private Map<String, TaxonomyNode> taxonomyMap = new HashMap<String, TaxonomyNode>();
 
 	// Fitness function weights
@@ -83,8 +85,9 @@ public class QoSModel extends GPModel {
 
     /* Available inputs, required outputs, and the dummy service
      * nodes representing them. */
-    private static Set<String> availableInputs;
-    private static Set<String> requiredOutputs;
+    private static Set<String> availableInputs = new HashSet<String>();
+    private static Set<String> requiredOutputs = new HashSet<String>();
+    public static Condition condition;
     private ServiceNode inputNode;
     private ServiceNode outputNode;
 
@@ -95,12 +98,19 @@ public class QoSModel extends GPModel {
 	private boolean recalculateTotals = true;
 
 	// Run settings
-	private static String _servFilename = "services-output.xml";
-	private static String _taskFilename = "problem.xml";
+	private static String _servFilename = "services-prob.xml";
+	private static String _taskFilename = "problem-prob.xml"; //XXX
+	//private static String _taskFilename = "taskSet.xml";
+	//private static String _taskFilename = "taskSetNoCondition2.xml";
 	private static String _taxonomyFilename = "taxonomy.xml";
 
 	public static String[] INPUT;
-	public static String[] OUTPUT;
+	public static String[] OUTPUT_IF;
+	public static String[] OUTPUT_ELSE;
+	public static double MINIMUM_COST = Double.MAX_VALUE;
+	public static double MINIMUM_TIME = Double.MAX_VALUE;
+	public static double MAXIMUM_COST = Double.MIN_VALUE;
+	public static double MAXIMUM_TIME = Double.MIN_VALUE;
 
 	public static int NUM_RUNS = 50;
 	public static int numServices;
@@ -140,7 +150,7 @@ public class QoSModel extends GPModel {
         	private String s = "";
         	@Override
     		public void write(byte buf[], int off, int len) {
-//                if (len > 0 && buf[len-1] != sep.charAt( 0 )) {
+//                if (len > 0 && buf[len-1] != sep.charAt( 0 )) { XXX
 //    				s += String.format("%s", StandardCharsets.US_ASCII.decode(ByteBuffer.wrap(buf, off, len)));
 //    			}
 //    			else {
@@ -190,8 +200,26 @@ public class QoSModel extends GPModel {
 		parseWSCTaxonomyFile(_taxonomyFilename);
 		findConceptsForInstances();
 
-    	inputNode = new ServiceNode("Input", new Properties(new HashSet<String>(), availableInputs, new double[]{0,0,1,1}));
-    	outputNode = new ServiceNode("Output", new Properties(requiredOutputs, new HashSet<String>(), new double[]{0,0,1,1}));
+//		List<List<String>> outList = new ArrayList<List<String>>();
+//		List<String> l = new ArrayList<String>();
+//		for (String s : INPUT)
+//			l.add(s);
+//		outList.add(l);
+//		List<Float> outProbList = new ArrayList<Float>();
+//		outProbList.add(1.0f);
+//    	inputNode = new ServiceNode("Input", new Properties(new HashSet<String>(), outList, outProbList, new double[]{0,0,1,1}));
+//    	inputNode.getOutputs().add(new HashSet<String>(outList.get(0)));
+//    	Set<String> l2 = new HashSet<String>();
+//    	l2.add(condition.general);
+//    	outputNode = new ServiceNode("Output", new Properties(l2, new ArrayList<List<String>>(), new ArrayList<Float>(), new double[]{0,0,1,1}));
+//    	outputNode.getOutputs().add(new HashSet<String>());
+
+		List<Float> probList = new ArrayList<Float>();
+		probList.add(1.0f);
+    	inputNode = new ServiceNode("Input", new Properties(new HashSet<String>(), new ArrayList<List<String>>(), probList, new double[]{0,0,1,1}));
+    	inputNode.getOutputs().add(new HashSet<String>());
+    	outputNode = new ServiceNode("Output", new Properties(new HashSet<String>(), new ArrayList<List<String>>(), probList, new double[]{0,0,1,1}));
+    	outputNode.getOutputs().add(new HashSet<String>());
 
     	populateOutputsInTree();
 
@@ -201,12 +229,13 @@ public class QoSModel extends GPModel {
 		// Function nodes
 		syntax.add(new SequenceNode());
 		syntax.add(new ParallelNode());
+		syntax.add(new ConditionalNode());
 
-		relevantServices = getRelevantServices(serviceMap, availableInputs, requiredOutputs);
+//		relevantServices = getRelevantServices(serviceMap, new HashSet<String>(l), new HashSet<String>(l2));
 		recalculateTotals = false;
 
 		// Terminal nodes
-		for (ServiceNode s : relevantServices) {
+		for (ServiceNode s : serviceMap.values()) {
 			syntax.add(s);
 		}
 
@@ -214,7 +243,9 @@ public class QoSModel extends GPModel {
         _logger.log(SETUP, "Filename: " + _servFilename);
         _logger.log(SETUP, "NumServices: " + numServices);
         _logger.log(SETUP, "TaskInput: " + Arrays.toString(INPUT));
-        _logger.log(SETUP, "TaskOutput: " + Arrays.toString(OUTPUT));
+        _logger.log(SETUP, "Condition: " + condition.general + " == " + condition.specific);
+        _logger.log(SETUP, "TaskOutputIf: " + Arrays.toString(OUTPUT_IF));
+        _logger.log(SETUP, "TaskOutputElse: " + Arrays.toString(OUTPUT_ELSE));
         _logger.log(SETUP, "NumRuns: " + NUM_RUNS);
         _logger.log(SETUP, "populationSize: " + POPULATION);
         _logger.log(SETUP, "MaxNumIterations: " + MAX_NUM_ITERATIONS);
@@ -280,7 +311,7 @@ public class QoSModel extends GPModel {
 
 			_logger.log(RUN, "BestFitness: " + fitness);
 			_logger.log(RUN, "BestProgram: " + program);
-			reset();
+//			reset();
         }
 		_logger.log(POSTRUN, "BestOverallFitness: " + bestOverallFitness);
 		_logger.log(POSTRUN, "BestOverallProgram: " + bestOverallProgram);
@@ -301,33 +332,9 @@ public class QoSModel extends GPModel {
 	public double getFitness(CandidateProgram program) {
 
         final GPCandidateProgram p = (GPCandidateProgram) program;
-        EvaluationResults results = (EvaluationResults) p.evaluate();
+        EvaluationResults res = (EvaluationResults) p.evaluate();
 
-        double T = results.longestTime;
-        double C = 0;
-        double A = 1;
-        double R = 1;
-
-        for (String name : results.servicesInTree) {
-        	ServiceNode service = serviceMap.get(name);
-
-        	if (service != null) {
-        		double[] qos = service.getQos();
-
-        		C += qos[COST];
-        		A *= qos[AVAILABILITY];
-        		R *= qos[RELIABILITY];
-        	}
-        }
-
-        if (normaliseTotals) {
-	        // Normalise C and T (values between [0,1]) using the sums of all values from services
-	        // that could be possibly in the composition.
-			T = T/_totalTime;
-			C = C/_totalCost;
-        }
-
-		return (w1 * (1 - A) + w2 * (1 - R) + w3 * T + w4 * C);
+		return (w1 * (1 - res.availability) + w2 * (1 - res.reliability) + w3 * res.time + w4 * res.cost);
 	}
 
     @Override
@@ -337,7 +344,7 @@ public class QoSModel extends GPModel {
 	 * @return class
 	 */
     public Class<?> getReturnType() {
-        Properties p = new Properties(null, null, null);
+        Properties p = new Properties(null, null, null, null);
         return p.getClass();
     }
 
@@ -375,7 +382,7 @@ public class QoSModel extends GPModel {
 	 * @param serviceMap
 	 * @return relevant services
 	 */
-	private List<ServiceNode> getRelevantServices(Map<String,ServiceNode> serviceMap, Set<String> inputs, Set<String> outputs) {
+	public List<ServiceNode> getRelevantServices(Map<String,ServiceNode> serviceMap, Set<String> inputs, Set<String> outputs) {
 		// If we are counting total time and total cost from scratch, reset them
 		if (normaliseTotals && recalculateTotals) {
 			_totalCost = 0.0;
@@ -392,7 +399,7 @@ public class QoSModel extends GPModel {
 			sList.addAll(sFound);
 			services.removeAll(sFound);
 			for (ServiceNode s: sFound) {
-				cSearch.addAll(s.getOutputs());
+				cSearch.addAll(s.getOutputs().get(0));
 				if (normaliseTotals && recalculateTotals) {
 					_totalCost += s.getQos()[COST];
 					_totalTime += s.getQos()[TIME];
@@ -407,7 +414,7 @@ public class QoSModel extends GPModel {
 		}
 		else {
 			String message = "It is impossible to perform a composition using the services and settings provided.";
-			System.out.println(message);
+			System.err.println(message);
 			System.exit(0);
 			return null;
 		}
@@ -442,6 +449,21 @@ public class QoSModel extends GPModel {
 			Node[] children = root.getChildren();
 			for (int i = 0; i < children.length; i++) {
 				children[i] = replaceSubtree(children[i], toReplace, replacement);
+			}
+			return root;
+		}
+	}
+
+	public Node replaceServicesInTree(Node root, ServiceNode toReplace, ServiceNode replacement) {
+		// If root is the node to be replaced
+		if (root.getIdentifier().equals(toReplace.getName())) {
+			return replacement;
+		}
+		// Else try to replace the children of this node, if any
+		else {
+			Node[] children = root.getChildren();
+			for (int i = 0; i < children.length; i++) {
+				children[i] = replaceServicesInTree(children[i], toReplace, replacement);
 			}
 			return root;
 		}
@@ -504,90 +526,7 @@ public class QoSModel extends GPModel {
 		return satisfied;
 	}
 
-	/**
-	 * Executes a greedy algorithm to create a graph representing a
-	 * functionally correct, non-cyclic representation of a web service
-	 * composition.
-	 *
-	 * @param services The services that are allowed to be included
-	 * in the graph
-	 * @param random
-	 * @return graph (null if there was a problem building the graph)
-	 */
-//	public Graph createGraph(List<ServiceNode> services, RandomNumberGenerator random, ForbiddenNodes fn) {
-//		Graph graph = new Graph();
-//
-//		// Queue for services to be matched
-//		Queue<GraphNode> queue = new LinkedList<GraphNode>();
-//		GraphNode end = new GraphNode(outputNode, this);
-//		queue.offer(end);
-//		graph.nodeMap.put(end.getName(), end);
-//
-//		// Set to record visits
-//		Set<String> visited = new HashSet<String>();
-//
-//		Set<String> sInput;
-//		// While there are more services to connect
-//
-//		while(!queue.isEmpty()) {
-//			// Poll next from queue
-//			GraphNode nodeTo = queue.poll();
-//
-//				if (!visited.contains(nodeTo.getName())) {
-//					visited.add(nodeTo.getName());
-//
-//				// Retrieve graph node (adds node to graph if not already there)
-//				sInput = new HashSet<String>(nodeTo.getInputs());
-//
-//				// While all of its inputs haven't been matched
-//				while (!sInput.isEmpty()) {
-//					// Pick a random service
-//					PickServiceResult result = pickRandomService(nodeTo, graph, relevantServices, sInput, random, fn);
-//
-//					// If there are no options to continue building this graph
-//					if (result.chosen == null){
-//						// Abort
-//					    if (result.path != null)
-//					        fn.addForbiddenNode( result.path.get(1).node, nodeTo.node );
-//						return null;
-//					}
-//
-//					GraphNode nodeFrom = getGraphNode(result.chosen.getIdentifier(), graph);
-//					if (nodeFrom == null || nodeFrom.equals(nodeTo)) {
-//                        System.out.println("Abort: unexpected error when creating graph.");
-//                        return null;
-//                    }
-//					else {
-//						// Check if its output feeds the input of the service we want to connect
-//						Set<String> intersect = getSatisfiedInputs(sInput, new HashSet<String>(nodeFrom.getOutputs()));
-//
-//						/* If it does, remove output that is fed from list of needed inputs,
-//						/* add connection to particle, and add service to queue (if it is not the
-//						/* start service) */
-//						if (!intersect.isEmpty()) {
-//							sInput.removeAll(intersect);
-//
-//							// Create graph connections
-//							GraphEdge edge = new GraphEdge(intersect);
-//							graph.edges.add(edge);
-//							edge.to = nodeTo;
-//							edge.from = nodeFrom;
-//							nodeTo.from.add(edge);
-//							nodeFrom.to.add(edge);
-//
-//							// Put service in queue if it has not already been visited
-//							if (!nodeFrom.getName().equals(inputNode.getName()) && !visited.contains(nodeFrom.getName())) {
-//								queue.offer(nodeFrom);
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}
-//		return graph;
-//	}
-
-	public Graph createGraph(List<ServiceNode> services, RandomNumberGenerator random, ForbiddenNodes fn) {
+	public Graph createGraph(List<ServiceNode> services, RandomNumberGenerator random, boolean exactOutput) {
 	    Graph graph = new Graph();
 	    Set<ServiceNode> unused = new HashSet<ServiceNode>(services);
 	    GraphNode start = new GraphNode(inputNode, this);
@@ -596,9 +535,9 @@ public class QoSModel extends GPModel {
 	    availableInputs.addAll(start.getOutputs());
 
 	    while(!isSubsumed(requiredOutputs,availableInputs)) {
-	        ServiceNode chosen = chooseServiceNode(availableInputs, unused);
+	        ServiceNode chosen = chooseServiceNode(availableInputs, new ArrayList<ServiceNode>(unused), random);
 	        unused.remove( chosen );
-	        availableInputs.addAll(chosen.getOutputs());
+	        availableInputs.addAll(chosen.getOutputs().get(0));
 	        connectChosenNode(chosen, graph);
 	    }
 	    connectChosenNode(outputNode, graph);
@@ -606,7 +545,8 @@ public class QoSModel extends GPModel {
 	    return graph;
 	}
 
-	private ServiceNode chooseServiceNode(Set<String> outputs, Set<ServiceNode> services) {
+	private ServiceNode chooseServiceNode(Set<String> outputs, List<ServiceNode> services, RandomNumberGenerator r) {
+		Collections.shuffle(services, ((MyRand) r).getRandom());
 	    for (ServiceNode n : services) {
 	        if (isSubsumed(n.getInputs(), outputs)) {
 	            return n;
@@ -624,14 +564,16 @@ public class QoSModel extends GPModel {
 	            if (gn != graphNode) {
     	            Set<String> intersect = getSatisfiedInputs(inputs, new HashSet<String>(gn.getOutputs()));
     	            if (!intersect.isEmpty()) {
-    	                GraphEdge edge = new GraphEdge(intersect);
-    	                edge.from = gn;
-    	                edge.to = graphNode;
-    	                gn.to.add( edge );
-    	                graphNode.from.add( edge );
-    	                graph.edges.add( edge );
+    	            	if (!(gn.getName().equals("Input") && node.getName().equals("Output"))) {
+    	            		GraphEdge edge = new GraphEdge(intersect);
+    	            		edge.from = gn;
+    	            		edge.to = graphNode;
+    	            		gn.to.add( edge );
+    	            		graphNode.from.add( edge );
+    	            		graph.edges.add( edge );
+    	            	}
+    	            	inputs.removeAll(intersect);
     	            }
-    	            inputs.removeAll(intersect);
 	            }
 	        }
 	    }
@@ -654,87 +596,107 @@ public class QoSModel extends GPModel {
 	        graph.nodeMap.remove( n.getName() );
 	        for (GraphEdge e : n.from) {
 	            e.from.to.remove( e );
+	            graph.edges.remove( e );
 	            removeDangling(e.from, graph);
 	        }
 	    }
 	}
 
-	/**
-	 * Checks whether there is a path between two graph nodes
-	 * in a DAG, using a basic depth-first traversal.
-	 *
-	 * @param origin
-	 * @param destination
-	 * @return true if there is a path, false otherwise
-	 */
-//	private boolean hasPath(GraphNode origin, GraphNode destination) {
-//		/* The end service in the graph is never the origin of any edges,
-//		 * and the start service is never the destination.*/
-//		if (origin.node.getName().equals(outputNode.getName()) || destination.node.getName().equals(inputNode.getName()))
-//			return false;
-//
-//		Queue<GraphNode> queue = new LinkedList<GraphNode>();
-//		queue.offer(origin);
-//
-//		while(!queue.isEmpty()) {
-//			GraphNode current = queue.poll();
-//			if (current == destination) {
-//				return true;
-//			}
-//			else {
-//				for (GraphEdge e : current.to) {
-//					queue.offer(e.to);
-//				}
-//			}
-//		}
-//		return false;
-//	}
+	public Node createTree(Set<String> inputs, List<Set<String>> outputPossibilities, RandomNumberGenerator random, float[] probabilities) {
+		// Create a conditional node if necessary
+		if (outputPossibilities.size() > 1) {
+	        // Create subtree from the condition's specific value to if-output
+	        Set<String> condInputs = new HashSet<String>();
+	        condInputs.add(QoSModel.condition.specific);
+	        condInputs.addAll(inputs);
+			updateInputAndOutput(condInputs, outputPossibilities.get(0));
 
-    private List<GraphNode> findPath(GraphNode origin, GraphNode destination) {
-        if (origin == destination) {
-            List<GraphNode> list = new ArrayList<GraphNode>();
-            list.add(destination);
-            return list;
-        }
-        else if (origin.to.isEmpty())
-            return null;
-        else {
-            for (GraphEdge e : origin.to) {
-                List<GraphNode> temp = findPath(e.to, destination);
-                if (temp != null) {
-                    // As soon as we have A path, return it...
-                    List<GraphNode> list = new ArrayList<GraphNode>();
-                    list.add(origin);
-                    list.addAll(temp);
-                    return list;
-                }
-            }
-            return null;
-        }
-    }
+			Graph ifGraph = null;
+			while (ifGraph == null) {
+				ifGraph = createGraph(getRelevantServices(getServices(), condInputs, outputPossibilities.get(0)), random, false);
+			}
+	        Node ifTree = ifGraph.nodeMap.get("Input").toTree(getInputs());
+	        adjustTreeOutputs(ifTree, outputPossibilities.get(0));
 
-    private boolean hasPath(GraphNode origin, GraphNode destination) {
-		/* The end service in the graph is never the origin of any edges,
-		 * and the start service is never the destination.*/
-        if (origin.node.getName().equals(outputNode.getName()) || destination.node.getName().equals(inputNode.getName()))
-            return false;
+	        // Create subtree from the condition's general value to else-output
+	        condInputs = new HashSet<String>();
+	        condInputs.add(QoSModel.condition.general);
+	        condInputs.addAll(inputs);
+			updateInputAndOutput(condInputs, outputPossibilities.get(1));
 
-        Queue<GraphNode> queue = new LinkedList<GraphNode>();
-        queue.offer(origin);
+			Graph elseGraph = null;
+			while (elseGraph == null) {
+				elseGraph = createGraph(getRelevantServices(getServices(), condInputs, outputPossibilities.get(1)), random, false);
+			}
+	        Node elseTree = elseGraph.nodeMap.get("Input").toTree(getInputs());
+	        adjustTreeOutputs(elseTree, outputPossibilities.get(1));
 
-        while(!queue.isEmpty()) {
-            GraphNode current = queue.poll();
-            if (current == destination) {
-                return true;
-            }
-            else {
-                for (GraphEdge e : current.to) {
-                    queue.offer(e.to);
-                }
-            }
-        }
-        return false;
-    }
+
+			// XXX: Assumption that ServiceNode outputs and probabilities are ordered from the most specific to the most
+			// general option.
+
+	        ConditionalNode conditionalTree = new ConditionalNode(QoSModel.condition);
+	        conditionalTree.setChild(0, ifTree);
+	        conditionalTree.setChild(1, elseTree);
+
+	        conditionalTree.getInputs().clear();
+	        conditionalTree.getInputs().add(QoSModel.condition.general);
+	        conditionalTree.getInputs().addAll(inputs);
+	        conditionalTree.getOutputs().add(outputPossibilities.get(0));
+	        conditionalTree.getOutputs().add(outputPossibilities.get(1));
+
+	        // Create a non-conditional part to the tree if necessary
+	        condInputs = new HashSet<String>();
+	        condInputs.add(QoSModel.condition.general);
+	        if (isSubsumed(condInputs, inputs)) {
+	        	conditionalTree.setProbabilities(probabilities);
+	        	return conditionalTree;
+	        }
+	        else {
+	        	updateInputAndOutput(inputs, condInputs);
+
+	        	Graph initialGraph = null;
+	        	while (initialGraph == null) {
+	        		initialGraph = createGraph(getRelevantServices(getServices(), inputs, condInputs), random, false);
+	        	}
+	        	Node initialTree = initialGraph.nodeMap.get("Input").toTree(getInputs());
+	        	adjustTreeOutputs(initialTree, condInputs);
+
+	        	// XXX: Assumption that there is only one node that produces the output for the condition,
+	        	// and that this node has probabilities that match the specific/general alternatives of condition.
+	        	List<Float> probs = initialGraph.nodeMap.get("Output").from.get(0).from.node.getProbabilities();
+	        	probabilities = new float[2];
+	        	probabilities[0] = probs.get(0);
+	        	probabilities[1] = probs.get(1);
+	        	conditionalTree.setProbabilities(probabilities);
+
+	        	// Assemble overall tree
+	        	SequenceNode tree = new SequenceNode();
+	        	tree.setChild(0, initialTree);
+	        	tree.setChild(1, conditionalTree);
+	        	tree.getInputs().clear();
+	        	tree.getInputs().addAll(inputs);
+	        	tree.getOutputs().add(outputPossibilities.get(0));
+	        	tree.getOutputs().add(outputPossibilities.get(1));
+	        	return tree;
+	        }
+		}
+		else {
+        	updateInputAndOutput(inputs, outputPossibilities.get(0));
+
+        	Graph simpleGraph = null;
+        	while (simpleGraph == null) {
+        		simpleGraph = createGraph(getRelevantServices(getServices(), inputs, outputPossibilities.get(0)), random, false);
+        	}
+        	Node simpleTree = simpleGraph.nodeMap.get("Input").toTree(getInputs());
+        	Set<String> correctionSet = new HashSet<String>();
+	        correctionSet.addAll(outputPossibilities.get(0));
+        	adjustTreeOutputs(simpleTree, correctionSet);
+        	return simpleTree;
+		}
+
+
+	}
 
 	/**
 	 * Given a service name, this method returns the corresponding
@@ -762,84 +724,6 @@ public class QoSModel extends GPModel {
 		return node;
 	}
 
-	/**
-	 * Randomly selects a service (from the list provided) that satisfies at least one
-	 * input from the set provided. A service is only selected if it is not already within
-	 * reach for that path, thus preventing the formation of cycles.
-	 *
-	 * @param services
-	 * @param input The selected service's output satisfies
-	 * at least one of the inputs in this set.
-	 * @param random
-	 * @return selected service (will be null only if there are no suitable service options)
-	 */
-	private PickServiceResult pickRandomService(GraphNode node, Graph graph, List<ServiceNode> services, Set<String> input, RandomNumberGenerator random, ForbiddenNodes fn) {
-		Node selected = null;
-		List<GraphNode> path = null;
-
-		Iterator<String> it = input.iterator();
-		GraphNode origin = graph.nodeMap.get(node.getName());
-		if (origin == null) {
-			System.err.println("Origin node should not be null.");
-			System.exit(1);
-		}
-
-		while (selected == null && it.hasNext()) {
-			String next = it.next();
-			List<Node> sList = new ArrayList<Node>(taxonomyMap.get(next).getServicesWithOutput());
-
-			if (!sList.isEmpty()) {
-				Collections.shuffle(sList, ((MyRand)random).getRandom());
-				List<ServiceNode> forbiddenList = fn.getForbiddenNodes(node.node);
-
-				for (int i = 0; i < sList.size(); i++) {
-					Node s = sList.get(i);
-					if (s.getIdentifier().equals(node.getName()))
-					    continue;
-					GraphNode destination = graph.nodeMap.get(s.getIdentifier());
-                    // If service is either in our list of allowed services, or it is the input service...
-					if (services.contains(s) || s.getIdentifier().equals(inputNode.getName())) {
-						if (destination == null) {
-						    if (forbiddenList == null || !forbiddenList.contains(s)) {
-						        selected = s;
-							    break;
-						    }
-						}
-						else {
-                            List<GraphNode> list = findPath(origin, destination);
-
-							if (list == null) {
-							    if (forbiddenList == null || !forbiddenList.contains(s)) {
-							        selected = s;
-							        break;
-							    }
-							}
-							else {
-							    path = list;
-							    break;
-							}
-						}
-					}
-				}
-			}
-		}
-		return new PickServiceResult(selected, path);
-	}
-
-	/**
-	 * Calculates the intersection of two sets without
-	 * destroying the original sets.
-	 *
-	 * @param a
-	 * @param b
-	 * @return intersection
-	 */
-	private Set<String> getIntersection( Set<String> a, Set<String> b ) {
-		Set<String> intersection = new HashSet<String>(a);
-		intersection.retainAll(b);
-		return intersection;
-	}
-
     private boolean isIntersection( Set<String> a, Set<String> b ) {
         for ( String v1 : a ) {
             if ( b.contains( v1 ) )
@@ -856,12 +740,12 @@ public class QoSModel extends GPModel {
 	 */
 	private void populateOutputsInTree() {
 		for (ServiceNode s: serviceMap.values()) {
-			for (String outputVal : s.getOutputs())
+			for (String outputVal : s.getOutputs().get(0))
 				taxonomyMap.get(outputVal).services.add(s);
 		}
 
 		// Now add the outputs of the input node
-		for (String outputVal : inputNode.getOutputs())
+		for (String outputVal : inputNode.getOutputs().get(0))
 			taxonomyMap.get(outputVal).services.add(inputNode);
 	}
 
@@ -874,7 +758,7 @@ public class QoSModel extends GPModel {
 	 * @param outputs
 	 */
 	public void updateInputAndOutput(Set<String> inputs, Set<String> outputs) {
-		Set<String> oldInputs = inputNode.getOutputs();
+		Set<String> oldInputs = inputNode.getOutputs().get(0);
 
 		// Remove input node from the old places in the input nodes
 		for (String s : oldInputs)
@@ -882,68 +766,21 @@ public class QoSModel extends GPModel {
 
 		inputNode = inputNode.clone();
 		outputNode = outputNode.clone();
-		inputNode.setOutputs(inputs);
+		inputNode.getOutputs().clear();
+		inputNode.getOutputs().add(inputs);
 		outputNode.setInputs(outputs);
-		availableInputs = inputs;
-		requiredOutputs = outputs;
+		availableInputs.clear();
+		availableInputs.addAll(inputs);
+		requiredOutputs.clear();
+		requiredOutputs.addAll(outputs);
 
 		// Now add the outputs of the input node
-		for (String outputVal : inputNode.getOutputs())
+		for (String outputVal : inputNode.getOutputs().get(0))
 			taxonomyMap.get(outputVal).services.add(inputNode);
 
 		// Rediscover services fit for the composition
 		relevantServices = getRelevantServices(serviceMap, availableInputs, requiredOutputs);
 	}
-
-	/**
-	 * Parses the file with the given name, creating Web
-	 * services based on this information and saving them
-	 * to the service map.
-	 *
-	 * @param fileName
-	 */
-	private void parseFile(String fileName) {
-        Set<String> inputs = new HashSet<String>();
-        Set<String> outputs = new HashSet<String>();
-        double[] qos = new double[4];
-
-        Properties p = new Properties(inputs, outputs, qos);
-
-        try {
-            Scanner scan = new Scanner(new File(fileName));
-            while(scan.hasNext()) {
-				String name = scan.next();
-				String inputBlock = scan.next();
-				String outputBlock = scan.next();
-
-				qos[TIME] = scan.nextDouble();
-				qos[COST] = scan.nextDouble();
-				qos[AVAILABILITY] = scan.nextDouble()/100;
-				qos[RELIABILITY] = scan.nextDouble()/100;
-				// Throw the other two away;
-				scan.nextDouble();
-				scan.nextDouble();
-
-				for (String s :inputBlock.split(","))
-					inputs.add(s);
-				for (String s :outputBlock.split(","))
-				outputs.add(s);
-
-                p = new Properties(inputs, outputs, qos);
-
-                ServiceNode ws = new ServiceNode(name, p);
-                serviceMap.put(name, ws);
-                inputs = new HashSet<String>();
-                outputs = new HashSet<String>();
-                qos = new double[4];
-            }
-            scan.close();
-        }
-        catch(IOException ioe) {
-            System.out.println("File parsing failed...");
-        }
-		numServices = serviceMap.size();
-    }
 
 	/**
 	 * Parses the WSC Web service file with the given name, creating Web
@@ -953,10 +790,11 @@ public class QoSModel extends GPModel {
 	 */
 	private void parseWSCServiceFile(String fileName) {
         Set<String> inputs = new HashSet<String>();
-        Set<String> outputs = new HashSet<String>();
+        List<List<String>> outputPossibilities = new ArrayList<List<String>>();
+        List<Float> probabilities = new ArrayList<Float>();
         double[] qos = new double[4];
 
-        Properties p = new Properties(inputs, outputs, qos);
+        Properties p;
 
         try {
         	File fXmlFile = new File(fileName);
@@ -972,7 +810,15 @@ public class QoSModel extends GPModel {
 
         		String name = eElement.getAttribute("name");
 				qos[TIME] = Double.valueOf(eElement.getAttribute("Res"));
+				if (qos[TIME] > MAXIMUM_TIME)
+					MAXIMUM_TIME = qos[TIME];
+				if (qos[TIME] < MINIMUM_TIME)
+					MINIMUM_TIME = qos[TIME];
 				qos[COST] = Double.valueOf(eElement.getAttribute("Pri"));
+				if (qos[COST] > MAXIMUM_COST)
+					MAXIMUM_COST = qos[COST];
+				if (qos[COST] < MINIMUM_COST)
+					MINIMUM_COST = qos[COST];
 				qos[AVAILABILITY] = Double.valueOf(eElement.getAttribute("Ava"));
 				qos[RELIABILITY] = Double.valueOf(eElement.getAttribute("Rel"));
 
@@ -986,32 +832,41 @@ public class QoSModel extends GPModel {
 				}
 
 				// Get outputs
-				org.w3c.dom.Node outputNode = eElement.getElementsByTagName("outputs").item(0);
-				NodeList outputNodes = ((Element)outputNode).getElementsByTagName("instance");
-				for (int j = 0; j < outputNodes.getLength(); j++) {
-					org.w3c.dom.Node out = outputNodes.item(j);
+				org.w3c.dom.Node outputNode = eElement.getElementsByTagName("outputs-possibilities").item(0);
+				NodeList possList = ((Element)outputNode).getElementsByTagName("outputs");
+				for (int j = 0; j < possList.getLength(); j++) {
+					org.w3c.dom.Node out = possList.item(j);
 					Element e = (Element) out;
-					outputs.add(e.getAttribute("name"));
+					probabilities.add(Float.valueOf(e.getAttribute("prob")));
+
+					List<String> outputs = new ArrayList<String>();
+					NodeList valueList = e.getElementsByTagName("instance");
+					for (int k = 0; k < valueList.getLength(); k++) {
+						org.w3c.dom.Node outVal = valueList.item(k);
+						outputs.add(((Element)outVal).getAttribute("name"));
+					}
+					outputPossibilities.add(outputs);
 				}
 
-                p = new Properties(inputs, outputs, qos);
+                p = new Properties(inputs, outputPossibilities, probabilities, qos);
 
                 ServiceNode ws = new ServiceNode(name, p);
                 serviceMap.put(name, ws);
                 inputs = new HashSet<String>();
-                outputs = new HashSet<String>();
+                outputPossibilities = new ArrayList<List<String>>();
+                probabilities = new ArrayList<Float>();
                 qos = new double[4];
         	}
     		numServices = serviceMap.size();
         }
         catch(IOException ioe) {
-            System.out.println("Service file parsing failed...");
+            System.err.println("Service file parsing failed...");
         }
         catch (ParserConfigurationException e) {
-            System.out.println("Service file parsing failed...");
+            System.err.println("Service file parsing failed...");
 		}
         catch (SAXException e) {
-            System.out.println("Service file parsing failed...");
+            System.err.println("Service file parsing failed...");
 		}
 		numServices = serviceMap.size();
     }
@@ -1038,26 +893,39 @@ public class QoSModel extends GPModel {
 				INPUT[i] = e.getAttribute("name");
 	    	}
 
-	    	org.w3c.dom.Node wanted = doc.getElementsByTagName("wanted").item(0);
-	    	NodeList wantedList = ((Element) wanted).getElementsByTagName("instance");
-	    	OUTPUT = new String[wantedList.getLength()];
+	    	org.w3c.dom.Node wanted = doc.getElementsByTagName("options").item(0);
+	    	org.w3c.dom.Node conditionNode = ((Element) wanted).getElementsByTagName("condition").item(0);
+	    	org.w3c.dom.Node ifNode = ((Element) wanted).getElementsByTagName("if").item(0);
+	    	org.w3c.dom.Node elseNode = ((Element) wanted).getElementsByTagName("else").item(0);
+
+	    	String general = ((Element)((Element) conditionNode).getElementsByTagName("general").item(0)).getAttribute("concept");
+	    	String specific = ((Element)((Element) conditionNode).getElementsByTagName("specific").item(0)).getAttribute("concept");
+	    	condition = new Condition(general, specific);
+
+	    	NodeList wantedList = ((Element) ifNode).getElementsByTagName("instance");
+	    	OUTPUT_IF = new String[wantedList.getLength()];
 	    	for (int i = 0; i < wantedList.getLength(); i++) {
 				org.w3c.dom.Node item = wantedList.item(i);
 				Element e = (Element) item;
-				OUTPUT[i] = e.getAttribute("name");
+				OUTPUT_IF[i] = e.getAttribute("name");
 	    	}
 
-			availableInputs = new HashSet<String>(Arrays.asList(INPUT));
-			requiredOutputs = new HashSet<String>(Arrays.asList(OUTPUT));
+	    	wantedList = ((Element) elseNode).getElementsByTagName("instance");
+	    	OUTPUT_ELSE = new String[wantedList.getLength()];
+	    	for (int i = 0; i < wantedList.getLength(); i++) {
+				org.w3c.dom.Node item = wantedList.item(i);
+				Element e = (Element) item;
+				OUTPUT_ELSE[i] = e.getAttribute("name");
+	    	}
 		}
 		catch (ParserConfigurationException e) {
-            System.out.println("Task file parsing failed...");
+            System.err.println("Task file parsing failed...");
 		}
 		catch (SAXException e) {
-            System.out.println("Task file parsing failed...");
+            System.err.println("Task file parsing failed...");
 		}
 		catch (IOException e) {
-            System.out.println("Task file parsing failed...");
+            System.err.println("Task file parsing failed...");
 		}
 	}
 
@@ -1079,13 +947,13 @@ public class QoSModel extends GPModel {
 		}
 
 		catch (ParserConfigurationException e) {
-            System.out.println("Taxonomy file parsing failed...");
+            System.err.println("Taxonomy file parsing failed...");
 		}
 		catch (SAXException e) {
-            System.out.println("Taxonomy file parsing failed...");
+            System.err.println("Taxonomy file parsing failed...");
 		}
 		catch (IOException e) {
-            System.out.println("Taxonomy file parsing failed...");
+            System.err.println("Taxonomy file parsing failed...");
 		}
 	}
 
@@ -1123,11 +991,11 @@ public class QoSModel extends GPModel {
 		for (int i = 0; i < INPUT.length; i++)
 			INPUT[i] = taxonomyMap.get(INPUT[i]).parent.value;
 
-		for (int i = 0; i < OUTPUT.length; i++)
-			OUTPUT[i] = taxonomyMap.get(OUTPUT[i]).parent.value;
+		for (int i = 0; i < OUTPUT_IF.length; i++)
+			OUTPUT_IF[i] = taxonomyMap.get(OUTPUT_IF[i]).parent.value;
 
-		availableInputs = new HashSet<String>(Arrays.asList(INPUT));
-		requiredOutputs = new HashSet<String>(Arrays.asList(OUTPUT));
+		for (int i = 0; i < OUTPUT_ELSE.length; i++)
+			OUTPUT_ELSE[i] = taxonomyMap.get(OUTPUT_ELSE[i]).parent.value;
 
 		for (ServiceNode s : serviceMap.values()) {
 			Set<String> inputs = s.getInputs();
@@ -1137,13 +1005,60 @@ public class QoSModel extends GPModel {
 				newInputs.add(taxonomyMap.get(i).parent.value);
 			s.setInputs(newInputs);
 
-			Set<String> outputs = s.getOutputs();
-			Set<String> newOutputs = new HashSet<String>();
+			List<List<String>> outputs = s.getOutputPossibilities();
+			for(int i = 0; i < outputs.size(); i++) {
+				List<String> oldOutputs = outputs.get(i);
+				List<String> newOutputs = new ArrayList<String>();
+				for (String out : oldOutputs) {
+					newOutputs.add(taxonomyMap.get(out).parent.value);
+				}
+				outputs.set(i, newOutputs);
+			}
 
-			for (String i : outputs)
-				newOutputs.add(taxonomyMap.get(i).parent.value);
-			s.setOutputs(newOutputs);
+			// Set the most general concepts of outputs as the non-conditional outputs of a node
+			if (outputs.size() == 1) {
+				s.getOutputs().clear();
+				s.getOutputs().add(new HashSet<String>(outputs.get(0)));
+			}
+			else {
+				Set<String> generalOutput = new HashSet<String>();
+				for (int h = 0; h < outputs.get(0).size(); h++) {
+					List<String> conceptList = new ArrayList<String>();
+					for (int i = 0; i < outputs.size(); i++) {
+						conceptList.add(outputs.get(i).get(h));
+					}
+					generalOutput.add(findMostGeneral(conceptList));
+				}
+				s.getOutputs().clear();
+				s.getOutputs().add(new HashSet<String>(generalOutput));
+			}
 		}
+	}
+
+	public String findMostGeneral(List<String> conceptList) {
+		List<List<String>> parentSets = new ArrayList<List<String>>();
+
+		for (String concept : conceptList) {
+			parentSets.add(getAncestors(concept));
+		}
+
+		List<String> retained = parentSets.get(0);
+		for (int i = 1; i < parentSets.size(); i++) {
+			retained.retainAll(parentSets.get(i));
+		}
+
+		return retained.get(0);
+	}
+
+	public List<String> getAncestors(String concept) {
+		List<String> parents = new ArrayList<String>();
+		parents.add(concept);
+		TaxonomyNode parent = taxonomyMap.get(concept).parent;
+		while (parent != null) {
+			parents.add(parent.value);
+			parent = parent.parent;
+		}
+		return parents;
 	}
 
 	/**
@@ -1189,34 +1104,17 @@ public class QoSModel extends GPModel {
 
     public void adjustTreeOutputs( Node n, Set< String > requiredOutputs ) {
         if ( !( n instanceof ServiceNode ) ) {
-//            if (++counter >= 100 ) { TODO
-//                try {
-//                    Thread.sleep( 1 );
-//                    counter = 0;
-//                }
-//                catch ( InterruptedException ignored ) {
-//                }
-//            }
+
             InOutNode ioN = ( InOutNode )n;
-            Set< String > outputs = ioN.getOutputs();
+            Set< String > outputs = ioN.getOutputs().get(0);
             Set< String > satisfied = getSatisfiedInputs( requiredOutputs, outputs );
-            outputs.clear();
-            outputs.addAll( satisfied );
+            ioN.getOutputs().clear();
+            ioN.getOutputs().add( satisfied );
             for ( Node child : n.getChildren() ) {
                 adjustTreeOutputs( child, satisfied );
             }
         }
     }
-
-	/**
-	 * Resets data structures in the model to ready
-	 * it for another run.
-	 */
-	private void reset() {
-	    availableInputs = new HashSet<String>(Arrays.asList(INPUT));
-	    requiredOutputs = new HashSet<String>(Arrays.asList(OUTPUT));
-	    updateInputAndOutput(availableInputs, requiredOutputs);
-	}
 
 	public static void main(String[] args) {
 		final GPModel model = new QoSModel(null, null, null, null, null);

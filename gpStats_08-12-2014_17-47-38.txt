@@ -1,0 +1,26 @@
+SETUP - Filename: ../wsc2008/Set02MetaData/services-prob.xml
+SETUP - NumServices: 558
+SETUP - TaskInput: [con1498435960, con189054683, con608925131, con1518098260, con1976883168, con1138780778, con1615385437, con1850512719]
+SETUP - Condition: dummy == dummy
+SETUP - TaskOutputIf: [con1681130442, con486035775, con702525080]
+SETUP - TaskOutputElse: []
+SETUP - NumRuns: 50
+SETUP - populationSize: 20
+SETUP - MaxNumIterations: 50
+SETUP - MaxInitialDepth: -1
+SETUP - MaxDepth: -1
+SETUP - CrossoverProb: 0.9
+SETUP - MutationProb: 0.1
+SETUP - NoElites: 1
+SETUP - fitness_W1: 0.25
+SETUP - fitness_W2: 0.25
+SETUP - fitness_W3: 0.25
+SETUP - fitness_W4: 0.25
+
+POSTRUN - BestOverallFitness: 0.6687851456725165
+POSTRUN - BestOverallProgram: PARALLEL (SEQUENCE (serv2020713184 PARALLEL (SEQUENCE (serv1673552019 SEQUENCE (serv1812416485 serv427048875)) SEQUENCE (serv288184409 SEQUENCE (serv1812416485 serv427048875)))) SEQUENCE (serv911435962 PARALLEL (SEQUENCE (serv1673552019 SEQUENCE (serv1812416485 serv427048875)) SEQUENCE (serv288184409 SEQUENCE (serv1812416485 serv427048875)))))
+
+Performance Statistics   2014-12-08 16:00:00 - 2014-12-08 19:00:00
+Tag                                                  Avg(ms)         Min         Max     Std Dev       Count
+RunTime                                               1526.8        1117        2021       194.2          50
+

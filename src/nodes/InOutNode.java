@@ -1,5 +1,6 @@
 package nodes;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -21,5 +22,5 @@ public interface InOutNode {
 	 *
 	 * @return outputs
 	 */
-	Set<String> getOutputs();
+	List<Set<String>> getOutputs();
 }

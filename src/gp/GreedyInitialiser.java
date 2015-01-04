@@ -1,6 +1,9 @@
 package gp;
 
 import graph.Graph;
+import nodes.ConditionalNode;
+import nodes.SequenceNode;
+
 import org.epochx.epox.Node;
 import org.epochx.gp.representation.GPCandidateProgram;
 import org.epochx.op.Initialiser;
@@ -8,7 +11,9 @@ import org.epochx.representation.CandidateProgram;
 import org.epochx.tools.random.RandomNumberGenerator;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Creates initial composition candidates by using the greedy graph creation
@@ -57,18 +62,21 @@ public class GreedyInitialiser implements Initialiser {
 	 * @return root node of candidate tree
 	 */
 	public Node createCandidate() {
-		Graph g = null;
-		ForbiddenNodes fn = new ForbiddenNodes();
-		while (g == null) {
-			g = model.createGraph(model.getRelevantServices(), random, fn);
-		}
-        Node tree = g.nodeMap.get("Input").toTree(model.getInputs());
-        model.adjustTreeOutputs(tree, QoSModel.getOutputs());
-//        try { TODO
-//            Thread.sleep( 500 );
-//        }
-//        catch ( InterruptedException ignored ) {
-//        }
-		return tree;
+		Set<String> inputs = new HashSet<String>();
+		for (String s: QoSModel.INPUT)
+			inputs.add(s);
+
+		List<Set<String>> outputs = new ArrayList<Set<String>>();
+		Set<String> ifOutputs = new HashSet<String>();
+		for (String s : model.OUTPUT_IF)
+			ifOutputs.add(s);
+		Set<String> elseOutputs = new HashSet<String>();
+		for (String s : model.OUTPUT_ELSE)
+			elseOutputs.add(s);
+		outputs.add(ifOutputs);
+		if (!elseOutputs.isEmpty())
+			outputs.add(elseOutputs);
+
+		return model.createTree(inputs, outputs, random, null);
 	}
 }
