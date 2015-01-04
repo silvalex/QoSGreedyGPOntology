@@ -1,0 +1,20 @@
+SETUP - Filename: src/tests/testDataset.xml
+SETUP - NumServices: 4
+SETUP - TaskInput: [DepartureDate, City, City, Date]
+SETUP - TaskOutput: [Map, ArrivalDate, Ticket, Reservation]
+SETUP - NumRuns: 0
+SETUP - populationSize: 30
+SETUP - MaxNumIterations: 50
+SETUP - MaxInitialDepth: -1
+SETUP - MaxDepth: -1
+SETUP - CrossoverProb: 0.9
+SETUP - MutationProb: 0.1
+SETUP - NoElites: 1
+SETUP - fitness_W1: 0.25
+SETUP - fitness_W2: 0.25
+SETUP - fitness_W3: 0.25
+SETUP - fitness_W4: 0.25
+
+POSTRUN - BestOverallFitness: Infinity
+POSTRUN - BestOverallProgram: null
+
