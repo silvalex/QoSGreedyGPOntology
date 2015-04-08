@@ -98,7 +98,7 @@ public class QoSModel extends GPModel {
 	private boolean recalculateTotals = true;
 
 	// Run settings
-	private static String _servFilename = "services-prob.xml";
+	private static String _servFilename = "services-prob-optimum.xml";
 	private static String _taskFilename = "problem-prob.xml"; //XXX
 	//private static String _taskFilename = "taskSet.xml";
 	//private static String _taskFilename = "taskSetNoCondition2.xml";
