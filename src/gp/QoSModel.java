@@ -98,7 +98,7 @@ public class QoSModel extends GPModel {
 	private boolean recalculateTotals = true;
 
 	// Run settings
-	private static String _servFilename = "services-prob-optimum.xml";
+	private static String _servFilename = "services-prob-test.xml";
 	private static String _taskFilename = "problem-prob.xml"; //XXX
 	//private static String _taskFilename = "taskSet.xml";
 	//private static String _taskFilename = "taskSetNoCondition2.xml";
@@ -334,7 +334,7 @@ public class QoSModel extends GPModel {
         final GPCandidateProgram p = (GPCandidateProgram) program;
         EvaluationResults res = (EvaluationResults) p.evaluate();
 
-		return (w1 * (1 - res.availability) + w2 * (1 - res.reliability) + w3 * res.time + w4 * res.cost);
+		return (w1 * (10000.0 - res.availability) + w2 * (10000.0 - res.reliability) + w3 * res.time + w4 * res.cost);
 	}
 
     @Override

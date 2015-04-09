@@ -104,9 +104,9 @@ public class ServiceNode extends Node implements InOutNode {
 	 * @return evaluation results
 	 */
 	public Object evaluate() {
-		double normalisedTime = (qos[QoSModel.TIME] - QoSModel.MINIMUM_TIME)/(QoSModel.MAXIMUM_TIME - QoSModel.MINIMUM_TIME);
-		double normalisedCost = (qos[QoSModel.COST] - QoSModel.MINIMUM_COST)/(QoSModel.MAXIMUM_COST - QoSModel.MINIMUM_COST);
-		return new EvaluationResults(normalisedTime, normalisedCost, qos[QoSModel.RELIABILITY], qos[QoSModel.AVAILABILITY]);
+//		double normalisedTime = (qos[QoSModel.TIME] - QoSModel.MINIMUM_TIME)/(QoSModel.MAXIMUM_TIME - QoSModel.MINIMUM_TIME);
+//		double normalisedCost = (qos[QoSModel.COST] - QoSModel.MINIMUM_COST)/(QoSModel.MAXIMUM_COST - QoSModel.MINIMUM_COST);
+		return new EvaluationResults(qos[QoSModel.TIME], qos[QoSModel.COST], qos[QoSModel.RELIABILITY], qos[QoSModel.AVAILABILITY]);
 	}
 
 	@Override

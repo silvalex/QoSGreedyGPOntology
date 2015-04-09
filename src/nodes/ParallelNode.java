@@ -61,7 +61,6 @@ public class ParallelNode extends Node implements InOutNode {
 		}
 
 		res.time = longestTime;
-		res.cost /= getChildren().length;
 		return res;
 	}
 

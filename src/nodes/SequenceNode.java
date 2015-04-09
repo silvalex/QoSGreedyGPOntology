@@ -58,8 +58,6 @@ public class SequenceNode extends Node implements InOutNode {
 			res.availability *= results.availability;
 		}
 
-		res.time /= getChildren().length;
-		res.cost /= getChildren().length;
 		return res;
 	}
 
