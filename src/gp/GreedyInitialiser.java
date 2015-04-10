@@ -73,9 +73,10 @@ public class GreedyInitialiser implements Initialiser {
 		Set<String> elseOutputs = new HashSet<String>();
 		for (String s : model.OUTPUT_ELSE)
 			elseOutputs.add(s);
-		outputs.add(ifOutputs);
-		if (!elseOutputs.isEmpty())
-			outputs.add(elseOutputs);
+
+		outputs.add(elseOutputs);
+		if (!ifOutputs.isEmpty())
+			outputs.add(ifOutputs);
 
 		return model.createTree(inputs, outputs, random, null);
 	}

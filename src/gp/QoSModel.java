@@ -65,6 +65,11 @@ public class QoSModel extends GPModel {
 	public static final int AVAILABILITY = 2;
 	public static final int RELIABILITY = 3;
 
+	public static final int IF = 1;
+	public static final int ELSE = 0;
+	public static final int COND_IF = 1;
+	public static final int COND_ELSE = 0;
+
 	// Node data structures for composition generation
 	private Map<String, ServiceNode> serviceMap = new HashMap<String, ServiceNode>();
 	private List<ServiceNode> relevantServices;
@@ -80,8 +85,8 @@ public class QoSModel extends GPModel {
 	public static final int MAX_INIT_DEPTH = -1;
 	public static final int MAX_DEPTH = -1;
 	public static final int NO_ELITES = 1;
-	public static final double CROSSOVER_PROB = 0.9;
-	public static final double MUTATION_PROB = 0.1;
+	public static final double CROSSOVER_PROB = 0.0;
+	public static final double MUTATION_PROB = 0.8;
 
     /* Available inputs, required outputs, and the dummy service
      * nodes representing them. */
@@ -399,7 +404,7 @@ public class QoSModel extends GPModel {
 			sList.addAll(sFound);
 			services.removeAll(sFound);
 			for (ServiceNode s: sFound) {
-				cSearch.addAll(s.getOutputs().get(0));
+				cSearch.addAll(s.getOutputs().get(ELSE));
 				if (normaliseTotals && recalculateTotals) {
 					_totalCost += s.getQos()[COST];
 					_totalTime += s.getQos()[TIME];
@@ -537,7 +542,7 @@ public class QoSModel extends GPModel {
 	    while(!isSubsumed(requiredOutputs,availableInputs)) {
 	        ServiceNode chosen = chooseServiceNode(availableInputs, new ArrayList<ServiceNode>(unused), random);
 	        unused.remove( chosen );
-	        availableInputs.addAll(chosen.getOutputs().get(0));
+	        availableInputs.addAll(chosen.getOutputs().get(ELSE));
 	        connectChosenNode(chosen, graph);
 	    }
 	    connectChosenNode(outputNode, graph);
@@ -609,41 +614,41 @@ public class QoSModel extends GPModel {
 	        Set<String> condInputs = new HashSet<String>();
 	        condInputs.add(QoSModel.condition.specific);
 	        condInputs.addAll(inputs);
-			updateInputAndOutput(condInputs, outputPossibilities.get(0));
+			updateInputAndOutput(condInputs, outputPossibilities.get(IF));
 
 			Graph ifGraph = null;
 			while (ifGraph == null) {
-				ifGraph = createGraph(getRelevantServices(getServices(), condInputs, outputPossibilities.get(0)), random, false);
+				ifGraph = createGraph(getRelevantServices(getServices(), condInputs, outputPossibilities.get(IF)), random, false);
 			}
 	        Node ifTree = ifGraph.nodeMap.get("Input").toTree(getInputs());
-	        adjustTreeOutputs(ifTree, outputPossibilities.get(0));
+	        adjustTreeOutputs(ifTree, outputPossibilities.get(IF));
 
 	        // Create subtree from the condition's general value to else-output
 	        condInputs = new HashSet<String>();
 	        condInputs.add(QoSModel.condition.general);
 	        condInputs.addAll(inputs);
-			updateInputAndOutput(condInputs, outputPossibilities.get(1));
+			updateInputAndOutput(condInputs, outputPossibilities.get(ELSE));
 
 			Graph elseGraph = null;
 			while (elseGraph == null) {
-				elseGraph = createGraph(getRelevantServices(getServices(), condInputs, outputPossibilities.get(1)), random, false);
+				elseGraph = createGraph(getRelevantServices(getServices(), condInputs, outputPossibilities.get(ELSE)), random, false);
 			}
 	        Node elseTree = elseGraph.nodeMap.get("Input").toTree(getInputs());
-	        adjustTreeOutputs(elseTree, outputPossibilities.get(1));
+	        adjustTreeOutputs(elseTree, outputPossibilities.get(ELSE));
 
 
 			// XXX: Assumption that ServiceNode outputs and probabilities are ordered from the most specific to the most
 			// general option.
 
 	        ConditionalNode conditionalTree = new ConditionalNode(QoSModel.condition);
-	        conditionalTree.setChild(0, ifTree);
-	        conditionalTree.setChild(1, elseTree);
+	        conditionalTree.setChild(COND_IF, ifTree);
+	        conditionalTree.setChild(COND_ELSE, elseTree);
 
 	        conditionalTree.getInputs().clear();
 	        conditionalTree.getInputs().add(QoSModel.condition.general);
 	        conditionalTree.getInputs().addAll(inputs);
-	        conditionalTree.getOutputs().add(outputPossibilities.get(0));
-	        conditionalTree.getOutputs().add(outputPossibilities.get(1));
+	        conditionalTree.getOutputs().add(outputPossibilities.get(IF));
+	        conditionalTree.getOutputs().add(outputPossibilities.get(ELSE));
 
 	        // Create a non-conditional part to the tree if necessary
 	        condInputs = new HashSet<String>();
@@ -666,8 +671,8 @@ public class QoSModel extends GPModel {
 	        	// and that this node has probabilities that match the specific/general alternatives of condition.
 	        	List<Float> probs = initialGraph.nodeMap.get("Output").from.get(0).from.node.getProbabilities();
 	        	probabilities = new float[2];
-	        	probabilities[0] = probs.get(0);
-	        	probabilities[1] = probs.get(1);
+	        	probabilities[COND_IF] = probs.get(IF);
+	        	probabilities[COND_ELSE] = probs.get(ELSE);
 	        	conditionalTree.setProbabilities(probabilities);
 
 	        	// Assemble overall tree
@@ -676,21 +681,21 @@ public class QoSModel extends GPModel {
 	        	tree.setChild(1, conditionalTree);
 	        	tree.getInputs().clear();
 	        	tree.getInputs().addAll(inputs);
-	        	tree.getOutputs().add(outputPossibilities.get(0));
-	        	tree.getOutputs().add(outputPossibilities.get(1));
+	        	tree.getOutputs().add(outputPossibilities.get(IF));
+	        	tree.getOutputs().add(outputPossibilities.get(ELSE));
 	        	return tree;
 	        }
 		}
 		else {
-        	updateInputAndOutput(inputs, outputPossibilities.get(0));
+        	updateInputAndOutput(inputs, outputPossibilities.get(ELSE));
 
         	Graph simpleGraph = null;
         	while (simpleGraph == null) {
-        		simpleGraph = createGraph(getRelevantServices(getServices(), inputs, outputPossibilities.get(0)), random, false);
+        		simpleGraph = createGraph(getRelevantServices(getServices(), inputs, outputPossibilities.get(ELSE)), random, false);
         	}
         	Node simpleTree = simpleGraph.nodeMap.get("Input").toTree(getInputs());
         	Set<String> correctionSet = new HashSet<String>();
-	        correctionSet.addAll(outputPossibilities.get(0));
+	        correctionSet.addAll(outputPossibilities.get(ELSE));
         	adjustTreeOutputs(simpleTree, correctionSet);
         	return simpleTree;
 		}
@@ -740,12 +745,12 @@ public class QoSModel extends GPModel {
 	 */
 	private void populateOutputsInTree() {
 		for (ServiceNode s: serviceMap.values()) {
-			for (String outputVal : s.getOutputs().get(0))
+			for (String outputVal : s.getOutputs().get(ELSE))
 				taxonomyMap.get(outputVal).services.add(s);
 		}
 
 		// Now add the outputs of the input node
-		for (String outputVal : inputNode.getOutputs().get(0))
+		for (String outputVal : inputNode.getOutputs().get(ELSE))
 			taxonomyMap.get(outputVal).services.add(inputNode);
 	}
 
@@ -758,7 +763,7 @@ public class QoSModel extends GPModel {
 	 * @param outputs
 	 */
 	public void updateInputAndOutput(Set<String> inputs, Set<String> outputs) {
-		Set<String> oldInputs = inputNode.getOutputs().get(0);
+		Set<String> oldInputs = inputNode.getOutputs().get(ELSE);
 
 		// Remove input node from the old places in the input nodes
 		for (String s : oldInputs)
@@ -775,7 +780,7 @@ public class QoSModel extends GPModel {
 		requiredOutputs.addAll(outputs);
 
 		// Now add the outputs of the input node
-		for (String outputVal : inputNode.getOutputs().get(0))
+		for (String outputVal : inputNode.getOutputs().get(ELSE))
 			taxonomyMap.get(outputVal).services.add(inputNode);
 
 		// Rediscover services fit for the composition
@@ -1018,11 +1023,11 @@ public class QoSModel extends GPModel {
 			// Set the most general concepts of outputs as the non-conditional outputs of a node
 			if (outputs.size() == 1) {
 				s.getOutputs().clear();
-				s.getOutputs().add(new HashSet<String>(outputs.get(0)));
+				s.getOutputs().add(new HashSet<String>(outputs.get(ELSE)));
 			}
 			else {
 				Set<String> generalOutput = new HashSet<String>();
-				for (int h = 0; h < outputs.get(0).size(); h++) {
+				for (int h = 0; h < outputs.get(ELSE).size(); h++) {
 					List<String> conceptList = new ArrayList<String>();
 					for (int i = 0; i < outputs.size(); i++) {
 						conceptList.add(outputs.get(i).get(h));
@@ -1106,7 +1111,7 @@ public class QoSModel extends GPModel {
         if ( !( n instanceof ServiceNode ) ) {
 
             InOutNode ioN = ( InOutNode )n;
-            Set< String > outputs = ioN.getOutputs().get(0);
+            Set< String > outputs = ioN.getOutputs().get(ELSE);
             Set< String > satisfied = getSatisfiedInputs( requiredOutputs, outputs );
             ioN.getOutputs().clear();
             ioN.getOutputs().add( satisfied );

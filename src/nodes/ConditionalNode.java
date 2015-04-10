@@ -2,6 +2,7 @@ package nodes;
 
 import gp.Condition;
 import gp.Properties;
+import gp.QoSModel;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -101,13 +102,13 @@ public class ConditionalNode extends Node implements InOutNode {
 	public Object evaluate() {
 		EvaluationResults res = new EvaluationResults();
 
-		EvaluationResults ifRes = (EvaluationResults) getChildren()[0].evaluate();
-		EvaluationResults elseRes = (EvaluationResults) getChildren()[1].evaluate();
+		EvaluationResults ifRes = (EvaluationResults) getChildren()[QoSModel.COND_IF].evaluate();
+		EvaluationResults elseRes = (EvaluationResults) getChildren()[QoSModel.COND_ELSE].evaluate();
 
-		res.time = (ifRes.time * probabilities[0]) + (elseRes.time * probabilities[1]);
-		res.cost = (ifRes.cost * probabilities[0]) + (elseRes.cost * probabilities[1]);
-		res.reliability = (ifRes.reliability * probabilities[0]) + (elseRes.reliability * probabilities[1]);
-		res.availability = (ifRes.availability * probabilities[0]) + (elseRes.availability * probabilities[1]);
+		res.time = (ifRes.time * probabilities[QoSModel.COND_IF]) + (elseRes.time * probabilities[QoSModel.COND_ELSE]);
+		res.cost = (ifRes.cost * probabilities[QoSModel.COND_IF]) + (elseRes.cost * probabilities[QoSModel.COND_ELSE]);
+		res.reliability = (ifRes.reliability * probabilities[QoSModel.COND_IF]) + (elseRes.reliability * probabilities[QoSModel.COND_ELSE]);
+		res.availability = (ifRes.availability * probabilities[QoSModel.COND_IF]) + (elseRes.availability * probabilities[QoSModel.COND_ELSE]);
 
 		return res;
 	}
