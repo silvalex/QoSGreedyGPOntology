@@ -3,7 +3,35 @@ package gp;
 import graph.Graph;
 import graph.GraphEdge;
 import graph.GraphNode;
-import nodes.*;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.Reader;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.Set;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import nodes.ConditionalNode;
+import nodes.EvaluationResults;
+import nodes.InOutNode;
+import nodes.ParallelNode;
+import nodes.SequenceNode;
+import nodes.ServiceNode;
 
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
@@ -31,14 +59,6 @@ import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
 
 import taxonomy.TaxonomyNode;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.*;
 
 /**
  * Model implementation for performing tree-based Web
@@ -85,8 +105,8 @@ public class QoSModel extends GPModel {
 	public static final int MAX_INIT_DEPTH = -1;
 	public static final int MAX_DEPTH = -1;
 	public static final int NO_ELITES = 1;
-	public static final double CROSSOVER_PROB = 0.0;
-	public static final double MUTATION_PROB = 0.8;
+	public static final double CROSSOVER_PROB = 0.9;
+	public static final double MUTATION_PROB = 0.1;
 
     /* Available inputs, required outputs, and the dummy service
      * nodes representing them. */
@@ -647,8 +667,8 @@ public class QoSModel extends GPModel {
 	        conditionalTree.getInputs().clear();
 	        conditionalTree.getInputs().add(QoSModel.condition.general);
 	        conditionalTree.getInputs().addAll(inputs);
-	        conditionalTree.getOutputs().add(outputPossibilities.get(IF));
 	        conditionalTree.getOutputs().add(outputPossibilities.get(ELSE));
+	        conditionalTree.getOutputs().add(outputPossibilities.get(IF));
 
 	        // Create a non-conditional part to the tree if necessary
 	        condInputs = new HashSet<String>();
@@ -681,8 +701,8 @@ public class QoSModel extends GPModel {
 	        	tree.setChild(1, conditionalTree);
 	        	tree.getInputs().clear();
 	        	tree.getInputs().addAll(inputs);
-	        	tree.getOutputs().add(outputPossibilities.get(IF));
 	        	tree.getOutputs().add(outputPossibilities.get(ELSE));
+	        	tree.getOutputs().add(outputPossibilities.get(IF));
 	        	return tree;
 	        }
 		}
