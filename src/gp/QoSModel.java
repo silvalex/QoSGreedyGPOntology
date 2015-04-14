@@ -1228,6 +1228,11 @@ public class QoSModel extends GPModel {
     }
 
 	public static void main(String[] args) {
-		final GPModel model = new QoSModel(null, null, null, null, null);
+		if (args.length > 0) {
+			final GPModel model = new QoSModel(null, null, null, null, null);
+		}
+		else {
+			final GPModel model = new QoSModel(args[0], args[1], args[2], args[3], args[4]);
+		}
 	}
 }
