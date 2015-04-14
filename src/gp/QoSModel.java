@@ -134,8 +134,13 @@ public class QoSModel extends GPModel {
 	public static String[] OUTPUT_ELSE;
 	public static double MINIMUM_COST = Double.MAX_VALUE;
 	public static double MINIMUM_TIME = Double.MAX_VALUE;
+	public static final double MINIMUM_RELIABILITY = 0;
+	public static final double MINIMUM_AVAILABILITY = 0;
 	public static double MAXIMUM_COST = Double.MIN_VALUE;
 	public static double MAXIMUM_TIME = Double.MIN_VALUE;
+	public static double MAXIMUM_RELIABILITY = Double.MIN_VALUE;
+	public static double MAXIMUM_AVAILABILITY = Double.MIN_VALUE;
+
 
 	public static int NUM_RUNS = 50;
 	public static int numServices;
@@ -359,7 +364,43 @@ public class QoSModel extends GPModel {
         final GPCandidateProgram p = (GPCandidateProgram) program;
         EvaluationResults res = (EvaluationResults) p.evaluate();
 
-		return (w1 * (10000.0 - res.availability) + w2 * (10000.0 - res.reliability) + w3 * res.time + w4 * res.cost);
+//        System.err.println("a: "+ res.availability + ", r: " + res.reliability + ", t: " + res.time + ", c: " + res.cost);
+		return w1 * (1.0 - normaliseAvailability(res.availability)) +
+			   w2 * (1.0 - normaliseReliability(res.reliability)) +
+			   w3 * normaliseTime(res.time) +
+			   w4 * normaliseCost(res.cost);
+	}
+
+	private double normaliseAvailability(double availability) {
+		if (MAXIMUM_AVAILABILITY - MINIMUM_AVAILABILITY == 0.0)
+			return 1.0;
+		else
+			return (availability - MINIMUM_AVAILABILITY)/(MAXIMUM_AVAILABILITY - MINIMUM_AVAILABILITY);
+	}
+
+	private double normaliseReliability(double reliability) {
+		if (MAXIMUM_RELIABILITY - MINIMUM_RELIABILITY == 0.0)
+			return 1.0;
+		else
+			return (reliability - MINIMUM_RELIABILITY)/(MAXIMUM_RELIABILITY - MINIMUM_RELIABILITY);
+	}
+
+	private double normaliseTime(double time) {
+		//double numEnds = init.endNodes.size();
+
+		if ((MAXIMUM_TIME * serviceMap.size()) - MINIMUM_TIME == 0.0)
+			return 0.0;
+		else
+			return (time - MINIMUM_TIME)/((MAXIMUM_TIME * serviceMap.size()) - MINIMUM_TIME);
+	}
+
+	private double normaliseCost(double cost) {
+		//double numEnds = init.endNodes.size();
+
+		if ((MAXIMUM_COST * serviceMap.size()) - MINIMUM_COST == 0.0)
+			return 0.0;
+		else
+			return (cost - MINIMUM_COST)/((MAXIMUM_COST * serviceMap.size()) - MINIMUM_COST);
 	}
 
     @Override
@@ -444,6 +485,43 @@ public class QoSModel extends GPModel {
 			return null;
 		}
 	}
+
+//	/**
+//	 * Goes through the service list and retrieves only those services which
+//	 * could be part of the composition task requested by the user.
+//	 *
+//	 * @param serviceMap
+//	 * @return relevant services
+//	 */
+//	private Set<ServiceNode> getGeneralRelevantServices(Map<String,ServiceNode> serviceMap, Set<String> inputs, Set<String> outputs) {
+//		// Copy service map values to retain original
+//		Collection<ServiceNode> services = new ArrayList<ServiceNode>(serviceMap.values());
+//
+//		Set<String> cSearch = new HashSet<String>(inputs);
+//		Set<ServiceNode> sSet = new HashSet<ServiceNode>();
+//		Set<ServiceNode> sFound = discoverService(services, cSearch);
+//		while (!sFound.isEmpty()) {
+//			sSet.addAll(sFound);
+//			services.removeAll(sFound);
+//			for (ServiceNode s: sFound) {
+//				for (List<String> outPoss : s.getOutputPossibilities()) {
+//					cSearch.addAll(outPoss);
+//				}
+//			}
+//			sFound.clear();
+//			sFound = discoverService(services, cSearch);
+//		}
+//
+//		if (isSubsumed(outputs, cSearch)) {
+//			return sSet;
+//		}
+//		else {
+//			String message = "It is impossible to perform a composition using the services and settings provided.";
+//			System.out.println(message);
+//			System.exit(0);
+//			return null;
+//		}
+//	}
 
 	/**
 	 * Retrieves the list of services that can possibly
@@ -845,7 +923,15 @@ public class QoSModel extends GPModel {
 				if (qos[COST] < MINIMUM_COST)
 					MINIMUM_COST = qos[COST];
 				qos[AVAILABILITY] = Double.valueOf(eElement.getAttribute("Ava"));
+				if (qos[AVAILABILITY] > MAXIMUM_AVAILABILITY)
+					MAXIMUM_AVAILABILITY = qos[AVAILABILITY];
+//				if (qos[AVAILABILITY] < MINIMUM_AVAILABILITY)
+//					MINIMUM_AVAILABILITY = qos[AVAILABILITY];
 				qos[RELIABILITY] = Double.valueOf(eElement.getAttribute("Rel"));
+				if (qos[RELIABILITY] > MAXIMUM_RELIABILITY)
+					MAXIMUM_RELIABILITY = qos[RELIABILITY];
+//				if (qos[RELIABILITY] < MINIMUM_RELIABILITY)
+//					MINIMUM_RELIABILITY = qos[RELIABILITY];
 
 				// Get inputs
 				org.w3c.dom.Node inputNode = eElement.getElementsByTagName("inputs").item(0);
