@@ -58,6 +58,8 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
 
+import sun.security.krb5.Config;
+import sun.security.krb5.KrbException;
 import taxonomy.TaxonomyNode;
 
 /**
@@ -100,13 +102,15 @@ public class QoSModel extends GPModel {
     private static final double w2 = 0.25;
     private static final double w3 = 0.25;
     private static final double w4 = 0.25;
-	public static final int POPULATION = 20;
-	public static final int MAX_NUM_ITERATIONS = 50;
+	public static final int POPULATION = 500;
+	public static final int MAX_NUM_ITERATIONS = 51;
 	public static final int MAX_INIT_DEPTH = -1;
 	public static final int MAX_DEPTH = -1;
-	public static final int NO_ELITES = 1;
-	public static final double CROSSOVER_PROB = 0.9;
+	public static final int NO_ELITES = 0;
+	public static final double CROSSOVER_PROB = 0.8;
 	public static final double MUTATION_PROB = 0.1;
+	public static final double REPRODUCTION_PROB = 0.1;
+	public static final int TOURNAMENT_SIZE = 2;
 
     /* Available inputs, required outputs, and the dummy service
      * nodes representing them. */
@@ -124,7 +128,7 @@ public class QoSModel extends GPModel {
 
 	// Run settings
 	private static String _servFilename = "services-prob-test.xml";
-	private static String _taskFilename = "problem-prob.xml"; //XXX
+	private static String _taskFilename = "problem-prob.xml";
 	//private static String _taskFilename = "taskSet.xml";
 	//private static String _taskFilename = "taskSetNoCondition2.xml";
 	private static String _taxonomyFilename = "taxonomy.xml";
@@ -142,9 +146,9 @@ public class QoSModel extends GPModel {
 	public static double MAXIMUM_AVAILABILITY = Double.MIN_VALUE;
 
 
-	public static int NUM_RUNS = 50;
+	public static int NUM_RUNS = 1;
 	public static int numServices;
-	private static final int SEED_COEFFICIENT = 3130;
+	private static int SEED_COEFFICIENT = 1;
 
 	/**
 	 * Sets up logging for this session.
@@ -153,7 +157,7 @@ public class QoSModel extends GPModel {
 		try {
 			_logger = Logger.getLogger(QoSModel.class);
 			SimpleLayout layout = new SimpleLayout();
-			_appender = new FileAppender(layout,_logFileName+".txt",false);
+			_appender = new FileAppender(layout,_logFileName,false);
 			_logger.addAppender(_appender);
 			_logger.setLevel(Level.ALL);
 			System.setOut(createLoggingProxy(System.out));
@@ -204,7 +208,11 @@ public class QoSModel extends GPModel {
 	 * function nodes for the tree as well as the composition
 	 * task and crossover/mutation probabilities.
 	 */
-	public QoSModel(String logName, String statLogName, String dataset, String taskSet, String taxonomySet) {
+	public QoSModel(Integer argSeed, String logName, String statLogName, String dataset, String taskSet, String taxonomySet) {
+
+		if (argSeed != null) {
+			SEED_COEFFICIENT = argSeed;
+		}
 		if (dataset != null)
 			_servFilename = dataset;
 		if (taskSet != null)
@@ -300,6 +308,7 @@ public class QoSModel extends GPModel {
 		setMaxDepth(MAX_DEPTH);
 		setCrossoverProbability(CROSSOVER_PROB);
 		setMutationProbability(MUTATION_PROB);
+		setReproductionProbability(REPRODUCTION_PROB);
 		setNoElites(NO_ELITES);
 
         // Request statistics every generation
@@ -315,12 +324,12 @@ public class QoSModel extends GPModel {
 
         for (int i = 0; i < NUM_RUNS; i++) {
 
-			long seed = i * SEED_COEFFICIENT;
+			long seed = (i + 1) * SEED_COEFFICIENT;
         	setRNG(new MyRand(seed));
 
         	// Set operators and components
         	setInitialiser(new GreedyInitialiser(this, getRNG()));
-        	setProgramSelector(new TournamentSelector(this, 7));
+        	setProgramSelector(new TournamentSelector(this, TOURNAMENT_SIZE));
         	setCrossover(new ServiceCrossover(this, getRNG()));
         	setMutation(new GreedyMutation(this, getRNG()));
 
@@ -1179,9 +1188,9 @@ public class QoSModel extends GPModel {
 	public static void _generateStatistics() {
 		try {
 			// Setup info
-			PrintStream stats = new PrintStream(new File (_statLogFileName + ".txt"));
+			PrintStream stats = new PrintStream(new File (_statLogFileName));
 
-			Scanner scan = new Scanner(new File(_logFileName+".txt"));
+			Scanner scan = new Scanner(new File(_logFileName));
 			while (scan.hasNext(SETUP.toString())) {
 				// Append setup info
 				stats.append(scan.nextLine()+"\n");
@@ -1201,7 +1210,7 @@ public class QoSModel extends GPModel {
 			stats.append("\n");
 
 			// Perf4J info
-			Reader reader = new FileReader(_logFileName+".txt");
+			Reader reader = new FileReader(_logFileName);
 			LogParser parser = new LogParser(reader, stats, null, 10800000, true, new GroupedTimingStatisticsTextFormatter());
 			parser.parseLog();
 			stats.close();
@@ -1228,11 +1237,12 @@ public class QoSModel extends GPModel {
     }
 
 	public static void main(String[] args) {
-		if (args.length > 0) {
-			final GPModel model = new QoSModel(null, null, null, null, null);
+		if (args.length == 0) {
+			final GPModel model = new QoSModel(null, null, null, null, null, null);
 		}
 		else {
-			final GPModel model = new QoSModel(args[0], args[1], args[2], args[3], args[4]);
+			int seed = Integer.parseInt(args[0]);
+			final GPModel model = new QoSModel(seed, args[1], args[2], args[3], args[4], args[5]);
 		}
 	}
 }
