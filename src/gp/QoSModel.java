@@ -102,7 +102,7 @@ public class QoSModel extends GPModel {
     private static final double w2 = 0.25;
     private static final double w3 = 0.25;
     private static final double w4 = 0.25;
-	public static final int POPULATION = 500;
+	public static final int POPULATION = 30;
 	public static final int MAX_NUM_ITERATIONS = 51;
 	public static final int MAX_INIT_DEPTH = -1;
 	public static final int MAX_DEPTH = -1;

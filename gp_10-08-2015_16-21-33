@@ -1,0 +1,25 @@
+SETUP - Filename: services-prob-test.xml
+SETUP - NumServices: 3
+SETUP - TaskInput: [con1233457844, con1849951292, con864995873, con1341600494, con468474915, con833249696, con989523773, con1825987619, con255876843, con1479850777, con147120010]
+SETUP - Condition: con1461416843 == con699300824
+SETUP - TaskOutputIf: [con1127978061, con1204374572, con974777029, con1825987619, con994029189, con1739145775]
+SETUP - TaskOutputElse: [con718963124, con1057317462, con1933720091, con353778165]
+SETUP - NumRuns: 1
+SETUP - populationSize: 500
+SETUP - MaxNumIterations: 51
+SETUP - MaxInitialDepth: -1
+SETUP - MaxDepth: -1
+SETUP - CrossoverProb: 0.8
+SETUP - MutationProb: 0.1
+SETUP - NoElites: 0
+SETUP - fitness_W1: 0.25
+SETUP - fitness_W2: 0.25
+SETUP - fitness_W3: 0.25
+SETUP - fitness_W4: 0.25
+RUN - Run: 0
+RUN - Seed: 1
+RUN - start[1439180494177] time[1178] tag[RunTime]
+RUN - BestFitness: 0.6100000030050675
+RUN - BestProgram: SEQUENCE (serv001 CONDITIONAL{con1461416843=con699300824} (serv002 serv003))
+POSTRUN - BestOverallFitness: 0.6100000030050675
+POSTRUN - BestOverallProgram: SEQUENCE (serv001 CONDITIONAL{con1461416843=con699300824} (serv002 serv003))
