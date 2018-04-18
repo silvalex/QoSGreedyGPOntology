@@ -1,0 +1,24 @@
+SETUP - Filename: ../wsc2008/Set01MetaData/services-output.xml
+SETUP - NumServices: 158
+SETUP - TaskInput: [con1233457844, con1849951292, con864995873]
+SETUP - TaskOutput: [con1220759822, con2119691623]
+SETUP - NumRuns: 50
+SETUP - populationSize: 20
+SETUP - MaxNumIterations: 50
+SETUP - MaxInitialDepth: -1
+SETUP - MaxDepth: -1
+SETUP - CrossoverProb: 0.9
+SETUP - MutationProb: 0.1
+SETUP - NoElites: 1
+SETUP - fitness_W1: 0.25
+SETUP - fitness_W2: 0.25
+SETUP - fitness_W3: 0.25
+SETUP - fitness_W4: 0.25
+
+POSTRUN - BestOverallFitness: 0.5606041230259254
+POSTRUN - BestOverallProgram: PARALLEL (SEQUENCE (serv1667050675 serv1531463259) SEQUENCE (serv7231183 PARALLEL (SEQUENCE (serv76663416 serv1531463259) SEQUENCE (serv769347240 SEQUENCE (serv900019062 serv699915007)))) SEQUENCE (serv1323166560 PARALLEL (SEQUENCE (serv2085282617 serv699915007) SEQUENCE (serv2085282617 serv699915007))) SEQUENCE (serv7231183 PARALLEL (SEQUENCE (serv76663416 serv1531463259) SEQUENCE (serv769347240 SEQUENCE (serv900019062 serv699915007)))) SEQUENCE (serv1323166560 PARALLEL (SEQUENCE (serv2085282617 serv699915007) SEQUENCE (serv2085282617 serv699915007))) SEQUENCE (serv1323166560 PARALLEL (SEQUENCE (serv2085282617 serv699915007) SEQUENCE (serv2085282617 serv699915007))))
+
+Performance Statistics   2014-11-03 07:00:00 - 2014-11-03 10:00:00
+Tag                                                  Avg(ms)         Min         Max     Std Dev       Count
+RunTime                                                840.8         704        1228        73.8          50
+

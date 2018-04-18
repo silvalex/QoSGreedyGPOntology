@@ -1,0 +1,24 @@
+SETUP - Filename: ../wsc2008/Set04MetaData/services-output.xml
+SETUP - NumServices: 1041
+SETUP - TaskInput: [con1174477567, con1559120783, con34478529, con1492759465, con1735261165, con1801416348]
+SETUP - TaskOutput: [con1183284356, con1112009574, con102886439, con1157274091]
+SETUP - NumRuns: 50
+SETUP - populationSize: 20
+SETUP - MaxNumIterations: 50
+SETUP - MaxInitialDepth: -1
+SETUP - MaxDepth: -1
+SETUP - CrossoverProb: 0.9
+SETUP - MutationProb: 0.1
+SETUP - NoElites: 1
+SETUP - fitness_W1: 0.25
+SETUP - fitness_W2: 0.25
+SETUP - fitness_W3: 0.25
+SETUP - fitness_W4: 0.25
+
+POSTRUN - BestOverallFitness: 0.5004945267908361
+POSTRUN - BestOverallProgram: PARALLEL (SEQUENCE (serv344157643 SEQUENCE (serv413589876 PARALLEL (SEQUENCE (serv691318808 serv760751041) SEQUENCE (serv1453434865 serv760751041) SEQUENCE (serv691318808 serv760751041) SEQUENCE (serv691318808 serv760751041) SEQUENCE (serv691318808 serv760751041)))) SEQUENCE (serv344157643 SEQUENCE (serv413589876 PARALLEL (SEQUENCE (serv691318808 serv760751041) SEQUENCE (serv1453434865 serv760751041) SEQUENCE (serv691318808 serv760751041) SEQUENCE (serv691318808 serv760751041) SEQUENCE (serv691318808 serv760751041)))))
+
+Performance Statistics   2014-11-03 07:00:00 - 2014-11-03 10:00:00
+Tag                                                  Avg(ms)         Min         Max     Std Dev       Count
+RunTime                                               2319.0        1834        2762       230.1          50
+

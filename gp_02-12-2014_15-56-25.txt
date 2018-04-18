@@ -1,0 +1,18 @@
+SETUP - Filename: services-output.xml
+SETUP - NumServices: 1090
+SETUP - TaskInput: [con428391640, con2100909192]
+SETUP - TaskOutput: [con1092196197, con1374634550, con2055848680]
+SETUP - NumRuns: 50
+SETUP - populationSize: 20
+SETUP - MaxNumIterations: 50
+SETUP - MaxInitialDepth: -1
+SETUP - MaxDepth: -1
+SETUP - CrossoverProb: 0.9
+SETUP - MutationProb: 0.1
+SETUP - NoElites: 1
+SETUP - fitness_W1: 0.25
+SETUP - fitness_W2: 0.25
+SETUP - fitness_W3: 0.25
+SETUP - fitness_W4: 0.25
+RUN - Run: 0
+RUN - Seed: 0

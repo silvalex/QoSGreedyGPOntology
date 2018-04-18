@@ -132,7 +132,7 @@ public class GraphNode {
 			}
 
 		}
-		
+
 		// Go down the tree once again adjusting outputs
 		return root;
 	}
